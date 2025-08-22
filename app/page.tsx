@@ -24,7 +24,10 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { categories } from '@/data/categories';
-import { getRecommendedProducts } from '@/data/products';
+import {useEffect, useState} from "react";
+import {Product} from "@/types";
+import apiClient from "@/lib/api";
+import {toast} from "sonner";
 
 const categoryIcons = {
   pizza: Pizza,
@@ -57,7 +60,23 @@ const testimonials = [
 ];
 
 export default function HomePage() {
-  const recommendedProducts = getRecommendedProducts().slice(0, 6);
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await apiClient.getProducts({ page: 1, pageSize: 1000 });
+        const data: Product[] = Array.isArray(response?.data) ? response.data : [];
+
+        setRecommendedProducts(data.filter((p) => p.recommended));
+      } catch (e) {
+        console.error(e);
+        toast.error('Eroare la încărcarea produselor');
+      }
+    }
+
+    fetchProducts();
+  }, []);
 
   return (
     <>

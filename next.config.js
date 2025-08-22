@@ -49,7 +49,7 @@ const nextConfig = {
         hostname: 'localhost',
       },
       {
-        protocal: 'https',
+        protocol: 'https',
         hostname: ' skycaffebe.dacars.ro'
       }
     ],

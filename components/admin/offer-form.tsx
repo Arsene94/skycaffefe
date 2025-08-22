@@ -14,13 +14,13 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, X } from 'lucide-react';
 import { categories } from '@/data/categories';
-import { products } from '@/data/products';
-import { Offer } from '@/types';
+import {Offer, Product} from '@/types';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
+import apiClient from "@/lib/api";
 
 const offerSchema = z.object({
   name: z.string()
@@ -106,6 +106,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       offer?.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ products, setProducts ] = useState<Product[]>();
 
   const form = useForm<OfferFormData>({
     resolver: zodResolver(offerSchema),
@@ -153,6 +154,19 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
     }
   }, [offer, reset]);
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await apiClient.getProducts({ page: 1, pageSize: 1000 });
+        setProducts(response.data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
   // Clear category/product selection when application type changes
   useEffect(() => {
     if (applicationType === 'cart') {
@@ -174,6 +188,10 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       setEndDate(undefined);
     }
   }, [startDate, endDate]);
+
+  if (!products) {
+    return <div>Se încarcă produsele...</div>;
+  }
 
   const addProduct = (productId: string) => {
     if (productId && !selectedProducts.includes(productId)) {

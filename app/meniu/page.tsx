@@ -1,21 +1,35 @@
 'use client';
 
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Header} from '@/components/layout/header';
-import {Footer} from '@/components/layout/footer';
-import {CartSheet} from '@/components/cart/cart-sheet';
-import {ProductCard} from '@/components/product/product-card';
-import {CategoryFilter} from '@/components/categories/category-filter';
-import {Input} from '@/components/ui/input';
-import {Button} from '@/components/ui/button';
-import {Badge} from '@/components/ui/badge';
-import {Search, X} from 'lucide-react';
-import {useSearchParams} from 'next/navigation';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
+import { CartSheet } from '@/components/cart/cart-sheet';
+import { ProductCard } from '@/components/product/product-card';
+import { CategoryFilter } from '@/components/categories/category-filter';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Search, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import apiClient from '@/lib/api';
-import {Category, Product} from '@/types';
-import {products} from "@/data/products";
+import { Category, Product } from '@/types';
 
 export default function MenuPage() {
+  // Wrap componentul care folosește useSearchParams în Suspense
+  return (
+      <Suspense
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <p>Se încarcă meniul...</p>
+            </div>
+          }
+      >
+        <MenuPageContent />
+      </Suspense>
+  );
+}
+
+function MenuPageContent() {
   const searchParams = useSearchParams();
   const initialCategoryParam = searchParams.get('category') || 'all';
 
@@ -49,13 +63,16 @@ export default function MenuPage() {
     fetchAll();
   }, []);
 
-  const resolveCategoryId = useCallback((value: string | null): string | null => {
-    const match = categories.find(
-        (c) => String(c.id) === String(value) || c.slug === value
-    );
-
-    return match?.id ? String(match.id) : null;
-  }, [categories]);
+  const resolveCategoryId = useCallback(
+      (value: string | null): string | null => {
+        if (!value || value === 'all') return null;
+        const match = categories.find(
+            (c) => String(c.id) === String(value) || c.slug === value
+        );
+        return match?.id ? String(match.id) : null;
+      },
+      [categories]
+  );
 
   const selectedCategoryId = useMemo(
       () => resolveCategoryId(selectedCategory),
@@ -64,23 +81,21 @@ export default function MenuPage() {
 
   const selectedCategoryName = useMemo(() => {
     if (!selectedCategoryId) return 'Toate preparatele';
-    const cat = categories.find((c) => c.id === selectedCategoryId);
+    const cat = categories.find((c) => String(c.id) === selectedCategoryId);
     return cat?.name ?? 'Categorie';
   }, [selectedCategoryId, categories]);
 
   const searchIds = useMemo(() => {
     if (!searchQuery.trim()) return null;
     const query = searchQuery.trim().toLowerCase();
-    const matches = products.filter((p) =>
-        p.name.toLowerCase().includes(query)
-    );
+    const matches = products.filter((p) => p.name.toLowerCase().includes(query));
     return new Set(matches.map((p) => p.id));
   }, [searchQuery, products]);
 
   const grouped = useMemo(() => {
     return categories.map((cat) => {
       const items = products.filter(
-          (p) => p.category.id === cat.id && (!searchIds || searchIds.has(p.id))
+          (p) => String(p.category.id) === String(cat.id) && (!searchIds || searchIds.has(p.id))
       );
       return { cat, items };
     });
@@ -89,7 +104,8 @@ export default function MenuPage() {
   const productCounts = useMemo(() => {
     const counts: Record<string, number> = { all: products.length };
     products.forEach((p) => {
-      counts[p.category.id] = (counts[p.category.id] || 0) + 1;
+      const key = String(p.category.id);
+      counts[key] = (counts[key] || 0) + 1;
     });
     return counts;
   }, [products]);
@@ -97,9 +113,7 @@ export default function MenuPage() {
   const clearSearch = () => setSearchQuery('');
 
   const categoryChips = useMemo(() => {
-    return [
-      ...categories.map((c) => ({ id: c.id, name: c.name })),
-    ];
+    return [...categories.map((c) => ({ id: c.id, name: c.name }))];
   }, [categories]);
 
   const chipsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -134,15 +148,16 @@ export default function MenuPage() {
     if (id) scrollToCategory(id);
   };
 
+  // Setează selectedCategory doar după ce categoriile sunt încărcate (pentru că poate fi slug)
   useEffect(() => {
     if (categories.length === 0) return;
-
     const resolvedId = resolveCategoryId(initialCategoryParam);
     if (resolvedId || initialCategoryParam === 'all') {
       setSelectedCategory(initialCategoryParam);
     }
   }, [categories, initialCategoryParam, resolveCategoryId]);
 
+  // Observer pe scroll – folosește ordinea DOM ca să nu depindă de sortări
   useEffect(() => {
     const sections = Array.from(
         document.querySelectorAll('section[id^="cat-"]')
@@ -167,6 +182,7 @@ export default function MenuPage() {
 
       if (activeId && resolveCategoryId(selectedCategory) !== activeId) {
         setSelectedCategory(activeId);
+
         const chipEl = chipsContainerRef.current?.querySelector<HTMLButtonElement>(
             `[data-cat="${activeId}"]`
         );
@@ -192,6 +208,7 @@ export default function MenuPage() {
         </div>
     );
   }
+
   return (
       <>
         <Header />
@@ -244,7 +261,7 @@ export default function MenuPage() {
                         ...categories.map((c) => ({
                           id: c.id,
                           name: c.name,
-                          icon: c.icon,
+                          icon: (c as any).icon, // păstrează dacă ai icon
                         })),
                       ]}
                   />
@@ -260,17 +277,16 @@ export default function MenuPage() {
                       className="flex items-stretch gap-2 overflow-x-auto py-2 hide-scrollbar snap-x snap-mandatory"
                   >
                     {categoryChips.map((cat) => {
-                      const isActive =
-                          resolveCategoryId(selectedCategory) === String(cat.id);
+                      const isActive = resolveCategoryId(selectedCategory) === String(cat.id);
                       const count =
-                          cat.id === 'all' ? products.length : productCounts[cat.id] ?? 0;
+                          (productCounts as any)[cat.id] ?? 0;
 
                       return (
                           <button
                               key={cat.id}
                               type="button"
                               data-cat={cat.id}
-                              onClick={() => handleSelectCategory(cat.id)}
+                              onClick={() => handleSelectCategory(String(cat.id))}
                               className={[
                                 'snap-start whitespace-nowrap rounded-full border px-3 py-1.5 text-sm transition-colors',
                                 isActive
@@ -282,9 +298,7 @@ export default function MenuPage() {
                             <span
                                 className={[
                                   'ml-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px]',
-                                  isActive
-                                      ? 'bg-primary-foreground/20'
-                                      : 'bg-muted text-muted-foreground',
+                                  isActive ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground',
                                 ].join(' ')}
                             >
                           {count}
@@ -310,7 +324,7 @@ export default function MenuPage() {
                         >
                           <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-semibold">{cat.name}</h3>
-                            <Badge variant="secondary">{productCounts[cat.id] ?? 0}</Badge>
+                            <Badge variant="secondary">{productCounts[String(cat.id)] ?? 0}</Badge>
                           </div>
 
                           {items.length > 0 ? (
@@ -333,17 +347,16 @@ export default function MenuPage() {
                     );
                   })}
 
-                  {searchQuery.trim() &&
-                      grouped.every((g) => g.items.length === 0) && (
-                          <div className="text-center py-12">
-                            <div className="text-6xl mb-4">🔍</div>
-                            <h3 className="text-xl font-semibold mb-2">Nu am găsit preparate</h3>
-                            <p className="text-muted-foreground mb-6">
-                              Nu avem preparate care să conțină „{searchQuery}”.
-                            </p>
-                            <Button onClick={clearSearch}>Resetează căutarea</Button>
-                          </div>
-                      )}
+                  {searchQuery.trim() && grouped.every((g) => g.items.length === 0) && (
+                      <div className="text-center py-12">
+                        <div className="text-6xl mb-4">🔍</div>
+                        <h3 className="text-xl font-semibold mb-2">Nu am găsit preparate</h3>
+                        <p className="text-muted-foreground mb-6">
+                          Nu avem preparate care să conțină „{searchQuery}”.
+                        </p>
+                        <Button onClick={clearSearch}>Resetează căutarea</Button>
+                      </div>
+                  )}
                 </div>
               </main>
             </div>

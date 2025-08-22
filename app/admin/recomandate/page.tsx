@@ -1,23 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {Star, GripVertical, Plus, Minus, Grid3X3} from 'lucide-react';
-import { products } from '@/data/products';
 import { formatPrice } from '@/lib/format';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import {Product} from "@/types";
+import apiClient from "@/lib/api";
 
 export default function AdminRecommendedPage() {
-  const [recommendedProducts, setRecommendedProducts] = useState(
-    products.filter(p => p.recommended)
-  );
-  const [availableProducts, setAvailableProducts] = useState(
-    products.filter(p => !p.recommended)
-  );
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await apiClient.getProducts({ page: 1, pageSize: 1000 });
+        const data: Product[] = Array.isArray(response?.data) ? response.data : [];
+
+        setAvailableProducts(data.filter((p) => !p.recommended));
+        setRecommendedProducts(data.filter((p) => p.recommended));
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return <div>Se încarcă produsele...</div>;
+  }
 
   const addToRecommended = (product: any) => {
     setRecommendedProducts(prev => [...prev, product]);
@@ -122,7 +141,7 @@ export default function AdminRecommendedPage() {
                         {formatPrice(product.price)}
                       </p>
                       <Badge variant="outline" className="text-xs">
-                        {product.category}
+                        {product.category.name}
                       </Badge>
                     </div>
                   </div>
@@ -200,7 +219,7 @@ export default function AdminRecommendedPage() {
                         {formatPrice(product.price)}
                       </p>
                       <Badge variant="outline" className="text-xs">
-                        {product.category}
+                        {product.category.name}
                       </Badge>
                       {!product.available && (
                         <Badge variant="secondary" className="text-xs">

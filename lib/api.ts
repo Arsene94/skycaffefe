@@ -122,7 +122,7 @@ class ApiClient {
         return this.request<any>('/users/profile');
     }
 
-    async getProducts(params?: { search?: string; category_id: string | number | undefined; page?: number; pageSize?: number }) {
+    async getProducts(params?: { search?: string; category_id?: string | number | undefined; page?: number; pageSize?: number }) {
         return this.request<any>(`/products?${new URLSearchParams(params as any)}`, {
             next: { revalidate: 0 },
         });

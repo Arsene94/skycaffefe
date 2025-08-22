@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { 
+import {
   TrendingUp,
   ShoppingCart,
   Users,
@@ -20,41 +20,11 @@ import {
   Package,
   Gift,
 } from 'lucide-react';
-import { products } from '@/data/products';
 import { formatPrice, formatShortDate } from '@/lib/format';
 import Link from 'next/link';
-
-// Mock data pentru statistici
-const stats = [
-  {
-    title: 'Venituri totale',
-    value: '15,247 lei',
-    change: '+12.5%',
-    changeType: 'positive' as const,
-    icon: TrendingUp,
-  },
-  {
-    title: 'Comenzi totale',
-    value: '432',
-    change: '+8.2%',
-    changeType: 'positive' as const,
-    icon: ShoppingCart,
-  },
-  {
-    title: 'Clienți unici',
-    value: '287',
-    change: '+15.3%',
-    changeType: 'positive' as const,
-    icon: Users,
-  },
-  {
-    title: 'Produse active',
-    value: products.length.toString(),
-    change: '+2',
-    changeType: 'positive' as const,
-    icon: Package,
-  },
-];
+import {useEffect, useState} from "react";
+import {Product} from "@/types";
+import apiClient from "@/lib/api";
 
 // Mock comenzi recente
 const recentOrders = [
@@ -106,17 +76,66 @@ const statusLabels = {
   delivered: 'Livrată',
 };
 
-// Produse populare
-const popularProducts = products
-  .filter(p => p.recommended)
-  .slice(0, 5)
-  .map(product => ({
-    ...product,
-    orders: Math.floor(Math.random() * 50) + 10,
-  }))
-  .sort((a, b) => b.orders - a.orders);
-
 export default function AdminDashboard() {
+  const [ products, setProducts ] = useState<Product[]>();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+        try {
+            const response = await apiClient.getProducts({ page: 1, pageSize: 1000 });
+          setProducts(response.data);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
+    }
+
+    fetchProducts();
+  }, []);
+
+  if (!products) return <div>Loading...</div>;
+
+  // Produse populare
+  const popularProducts = products
+      .filter(p => p.recommended)
+      .slice(0, 5)
+      .map(product => ({
+        ...product,
+        orders: Math.floor(Math.random() * 50) + 10,
+      }))
+      .sort((a, b) => b.orders - a.orders);
+
+  // Mock data pentru statistici
+  const stats = [
+    {
+      title: 'Venituri totale',
+      value: '15,247 lei',
+      change: '+12.5%',
+      changeType: 'positive' as const,
+      icon: TrendingUp,
+    },
+    {
+      title: 'Comenzi totale',
+      value: '432',
+      change: '+8.2%',
+      changeType: 'positive' as const,
+      icon: ShoppingCart,
+    },
+    {
+      title: 'Clienți unici',
+      value: '287',
+      change: '+15.3%',
+      changeType: 'positive' as const,
+      icon: Users,
+    },
+    {
+      title: 'Produse active',
+      value: products.length.toString(),
+      change: '+2',
+      changeType: 'positive' as const,
+      icon: Package,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -131,7 +150,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          
+
           return (
             <Card key={index}>
               <CardContent className="p-6">
@@ -206,7 +225,7 @@ export default function AdminDashboard() {
                       {formatPrice(order.total)}
                     </TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant="secondary"
                         className={statusColors[order.status]}
                       >
@@ -240,7 +259,7 @@ export default function AdminDashboard() {
                       #{index + 1}
                     </span>
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{product.name}</p>
                     <div className="flex items-center space-x-2 mt-1">
@@ -255,7 +274,7 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                  
+
                   <p className="font-semibold text-[hsl(var(--primary))]">
                     {formatPrice(product.price)}
                   </p>

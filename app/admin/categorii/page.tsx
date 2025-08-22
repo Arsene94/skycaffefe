@@ -20,10 +20,9 @@ import {
   Plus, Search, Edit, Trash2, Grid3X3, Barrel, Pizza, UtensilsCrossed, ChefHat, Leaf, Cake, Coffee,
   Utensils, Apple, Wine, Beer, GlassWater, Hamburger, Shrimp, Fish, Beef, CookingPot,
 } from 'lucide-react';
-import { products } from '@/data/products';
 import { CategoryForm } from '@/components/admin/category-form';
 import { toast } from 'sonner';
-import { Category } from '@/types';
+import {Category, Product} from '@/types';
 import apiClient from "@/lib/api";
 
 const categoryIcons = {
@@ -43,12 +42,27 @@ export default function AdminCategoriesPage() {
   const [totalCategories, setTotalCategories] = useState(0);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [products, setProducts] = useState<Product[]>(); // Simulated products data
 
   // Debounce search input
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(searchQuery), 500);
     return () => clearTimeout(timeout);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+        try {
+            const response = await apiClient.getProducts({ page: 1, pageSize: 1000 });
+            setProducts(response.data);
+        } catch (e) {
+            console.error(e);
+            toast.error('Eroare la încărcarea produselor');
+        }
+    }
+
+    fetchProducts();
+  }, []);
 
   const reloadCategories = useCallback(async () => {
     try {
@@ -70,13 +84,13 @@ export default function AdminCategoriesPage() {
   }, [reloadCategories]);
 
   const getProductCount = (categoryId: string) =>
-      products.filter(product => product.category.id === categoryId).length;
+      products?.filter(product => product.category.id === categoryId).length;
 
   const totalPages = Math.ceil(totalCategories / PAGE_SIZE);
 
   const handleDeleteCategory = async (categoryId: string) => {
     const productCount = getProductCount(categoryId);
-    if (productCount > 0) {
+    if (productCount && productCount > 0) {
       toast.error('Nu poți șterge categoria', {
         description: `Categoria conține ${productCount} produse. Mută sau șterge produsele mai întâi.`,
       });
@@ -183,8 +197,8 @@ export default function AdminCategoriesPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                              variant={productCount > 0 ? 'default' : 'secondary'}
-                              className={productCount > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' : ''}
+                              variant={productCount && productCount > 0 ? 'default' : 'secondary'}
+                              className={productCount && productCount > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300' : ''}
                           >
                             {productCount} {productCount === 1 ? 'produs' : 'produse'}
                           </Badge>
@@ -199,7 +213,7 @@ export default function AdminCategoriesPage() {
                                 size="icon"
                                 onClick={() => handleDeleteCategory(category.id)}
                                 className="text-destructive hover:text-destructive"
-                                disabled={productCount > 0}
+                                disabled={!!productCount && productCount > 0}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
