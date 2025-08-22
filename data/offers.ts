@@ -8,7 +8,7 @@ export const offers: Offer[] = [
     type: 'PERCENT',
     value: 15,
     applicationType: 'category',
-    categoryId: 'pizza',
+    categoryId: 'temporibus-qui',
     conditions: {
       minItems: 1,
       minSubtotal: 30,
@@ -71,7 +71,7 @@ function calculateOfferDiscount(cartItems: any[], offer: Offer): number {
   // TODO: Implement complex discount calculation logic
   // This is a simplified version for demo purposes
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  
+
   if (offer.conditions.minSubtotal && subtotal < offer.conditions.minSubtotal) {
     return 0;
   }
@@ -82,18 +82,18 @@ function calculateOfferDiscount(cartItems: any[], offer: Offer): number {
 
   switch (offer.applicationType) {
     case 'cart':
-      return offer.type === 'PERCENT' 
-        ? (subtotal * offer.value) / 100 
+      return offer.type === 'PERCENT'
+        ? (subtotal * offer.value) / 100
         : offer.value;
-    
+
     case 'category':
       const categoryTotal = cartItems
         .filter(item => item.product.category === offer.categoryId)
         .reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-      return offer.type === 'PERCENT' 
-        ? (categoryTotal * offer.value) / 100 
+      return offer.type === 'PERCENT'
+        ? (categoryTotal * offer.value) / 100
         : offer.value;
-    
+
     default:
       return 0;
   }

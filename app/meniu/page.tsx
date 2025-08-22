@@ -50,8 +50,15 @@ function MenuPageContent() {
           apiClient.getCategories(),
           apiClient.getProducts(),
         ]);
+
         setCategories(catRes.data);
-        setProducts(prodRes.data);
+
+        const normalized = (prodRes.data || []).map((p: any) => ({
+          ...p,
+          recommended: Boolean(p.is_recommended_now),
+        }));
+
+        setProducts(normalized);
       } catch (err) {
         console.error('Failed to fetch:', err);
       } finally {

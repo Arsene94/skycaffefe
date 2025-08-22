@@ -7,7 +7,6 @@ class ApiClient {
     constructor(baseURL: string) {
         this.baseURL = baseURL;
 
-        // Get token from localStorage if available
         if (typeof window !== 'undefined') {
             this.token = localStorage.getItem('auth_token');
         }
@@ -27,18 +26,23 @@ class ApiClient {
         }
     }
 
-    private async request<T>(
-        endpoint: string,
-        options: RequestInit = {}
-    ): Promise<T> {
+    private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
         const url = `${this.baseURL}${endpoint}`;
+
+        // Detect FormData to avoid setting JSON content-type
+        const isFormData =
+            typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+        const defaultHeaders: Record<string, string> = {
+            Accept: 'application/json',
+            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+        };
 
         const config: RequestInit = {
             ...options,
             headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                ...(this.token && { Authorization: `Bearer ${this.token}` }),
+                ...defaultHeaders,
                 ...(options.headers || {}),
             },
             credentials: 'include',
@@ -60,7 +64,7 @@ class ApiClient {
 
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
-                return await response.json();
+                return (await response.json()) as T;
             } else {
                 return {} as T;
             }
@@ -70,8 +74,10 @@ class ApiClient {
         }
     }
 
+    // ----------------
     // Auth endpoints
-    async loginPin(credentials: { pin: string; }) {
+    // ----------------
+    async loginPin(credentials: { pin: string }) {
         const response = await this.request<{
             access_token: string;
             user: any;
@@ -85,7 +91,7 @@ class ApiClient {
         return response;
     }
 
-    async loginEmail(credentials: { email: string; password: string; }) {
+    async loginEmail(credentials: { email: string; password: string }) {
         const response = await this.request<{
             access_token: string;
             user: any;
@@ -122,8 +128,17 @@ class ApiClient {
         return this.request<any>('/users/profile');
     }
 
-    async getProducts(params?: { search?: string; category_id?: string | number | undefined; page?: number; pageSize?: number }) {
-        return this.request<any>(`/products?${new URLSearchParams(params as any)}`, {
+    // ----------------
+    // Products
+    // ----------------
+    async getProducts(params?: {
+        search?: string;
+        category_id?: string | number | undefined;
+        page?: number;
+        pageSize?: number;
+    }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/products${qs}`, {
             next: { revalidate: 0 },
         });
     }
@@ -136,9 +151,7 @@ class ApiClient {
             method: 'POST',
             body: formData,
             credentials: 'include',
-            headers: {
-                ...(this.token && { Authorization: `Bearer ${this.token}` }),
-            },
+            // NOTE: no Content-Type here; browser sets multipart boundary
         });
     }
 
@@ -149,25 +162,17 @@ class ApiClient {
         });
     }
 
-    async updateProduct(id: string, payload: any) {
+    async updateProduct(id: string | number, payload: any) {
         return this.request<any>(`/admin/products/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-            },
         });
     }
 
     async deleteProduct(id: string | number) {
-        return this.request<{ status: string }>(`/admin/products/${id}`, {
+        return this.request<any>(`/admin/products/${id}`, {
             method: 'DELETE',
             credentials: 'include',
-            headers: {
-                ...(this.token && { Authorization: `Bearer ${this.token}` }),
-            },
         });
     }
 
@@ -176,14 +181,18 @@ class ApiClient {
     }
 
     async createProductTag(name: string) {
-        return this.request<{ id: number; name: string }>('/admin/products/tags', {
+        return this.request<any>('/admin/products/tags', {
             method: 'POST',
             body: JSON.stringify({ name }),
         });
     }
 
+    // ----------------
+    // Categories
+    // ----------------
     async getCategories(params?: { search?: string; page?: number; pageSize?: number }) {
-        return this.request<any>(`/categories?${new URLSearchParams(params as any)}`, {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/categories${qs}`, {
             next: { revalidate: 0 },
         });
     }
@@ -205,38 +214,31 @@ class ApiClient {
         });
     }
 
-    async updateCategory(id: string | number, payload: Partial<{
-        name: string;
-        slug: string;
-        description?: string | null;
-        icon?: string | null;
-        order?: number;
-    }>) {
+    async updateCategory(
+        id: string | number,
+        payload: Partial<{
+            name: string;
+            slug: string;
+            description?: string | null;
+            icon?: string | null;
+            order?: number;
+        }>
+    ) {
         return this.request<any>(`/admin/categories/${id}`, {
             method: 'PATCH',
             body: JSON.stringify(payload),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-            },
         });
     }
 
     async deleteCategory(id: string | number) {
-        return this.request<{ status: string }>(`/admin/categories/${id}`, {
+        return this.request<any>(`/admin/categories/${id}`, {
             method: 'DELETE',
             credentials: 'include',
-            headers: {
-                ...(this.token && { Authorization: `Bearer ${this.token}` }),
-            },
         });
     }
 
-    async updateCategoryOrder(
-        orders: { id: string | number; order: number }[]
-    ) {
-        return this.request<{ status: string }>(`/admin/categories/order`, {
+    async updateCategoryOrder(orders: { id: string | number; order: number }[]) {
+        return this.request<any>(`/admin/categories/order`, {
             method: 'POST',
             body: JSON.stringify({ orders }),
         });
@@ -246,6 +248,58 @@ class ApiClient {
         return this.request<any>('/categories/popular', {
             next: { revalidate: 3600 },
         });
+    }
+
+    // ----------------
+    // Recommendations (Queue per category)
+    // ----------------
+
+    // GET /api/recommendations?category_id=77
+    async getRecommendations(params: { category_id: string | number }) {
+        const qs = `?${new URLSearchParams({
+            category_id: String(params.category_id),
+        })}`;
+        return this.request<any>(`/admin/recommendations${qs}`);
+    }
+
+    // POST /api/recommendations
+    async createRecommendation(payload: {
+        category_id: string | number;
+        product_id: string | number;
+        duration: number;
+        unit: 'days' | 'weeks' | 'months';
+        start_at?: string | null;
+    }) {
+        return this.request<any>('/admin/recommendations', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    // PUT /api/recommendations/reorder
+    async reorderRecommendations(payload: {
+        category_id: string | number;
+        items: { id: number | string; position: number }[];
+    }) {
+        return this.request<any>('/admin/recommendations/reorder', {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    // DELETE /api/recommendations/{id}
+    async deleteRecommendation(id: string | number) {
+        return this.request<void>(`/admin/recommendations/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // GET /api/recommendations/active?category_id=77
+    async getActiveRecommendation(params: { category_id: string | number }) {
+        const qs = `?${new URLSearchParams({
+            category_id: String(params.category_id),
+        })}`;
+        return this.request<any>(`/admin/recommendations/active${qs}`);
     }
 }
 

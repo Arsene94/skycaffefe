@@ -24,7 +24,7 @@ export function ProductCard({ product, showCategory = false, className }: Produc
       duration: 2000,
     });
   };
-
+console.log(product)
   return (
     <Card className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${className}`}>
       <CardContent className="p-0">
