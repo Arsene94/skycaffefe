@@ -8,6 +8,7 @@ export const categories: Category[] = [
     icon: 'pizza',
     description: 'Pizza artizanală cu ingrediente proaspete',
     order: 1,
+    is_popular: false,
   },
   {
     id: 'paste',
@@ -16,6 +17,7 @@ export const categories: Category[] = [
     icon: 'utensils',
     description: 'Paste italiene clasice și moderne',
     order: 2,
+    is_popular: false,
   },
   {
     id: 'burgeri',
@@ -24,6 +26,7 @@ export const categories: Category[] = [
     icon: 'chefhat',
     description: 'Burgeri gourmet cu carne premium',
     order: 3,
+    is_popular: false,
   },
   {
     id: 'salate',
@@ -32,6 +35,7 @@ export const categories: Category[] = [
     icon: 'leaf',
     description: 'Salate fresh cu ingrediente de sezon',
     order: 4,
+    is_popular: false,
   },
   {
     id: 'desert',
@@ -40,6 +44,7 @@ export const categories: Category[] = [
     icon: 'cake',
     description: 'Deserturi delicioase și dulciuri',
     order: 5,
+    is_popular: false,
   },
   {
     id: 'bauturi',
@@ -48,11 +53,6 @@ export const categories: Category[] = [
     icon: 'coffee',
     description: 'Cafea de specialitate și băuturi răcoritoare',
     order: 6,
+    is_popular: false,
   },
 ];
-
-export const getCategoryById = (id: string): Category | undefined =>
-  categories.find(cat => cat.id === id);
-
-export const getCategoryBySlug = (slug: string): Category | undefined =>
-  categories.find(cat => cat.slug === slug);

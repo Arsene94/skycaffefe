@@ -30,12 +30,12 @@ export function ProductCard({ product, showCategory = false, className }: Produc
       <CardContent className="p-0">
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg">
-          {/*<Image*/}
-          {/*  src={product.image}*/}
-          {/*  alt={product.name}*/}
-          {/*  fill*/}
-          {/*  className="object-cover group-hover:scale-105 transition-transform duration-300"*/}
-          {/*/>*/}
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
 
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-2">
