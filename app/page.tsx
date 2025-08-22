@@ -19,23 +19,20 @@ import {
   Leaf,
   Cake,
   Coffee,
-  Quote,
+  Quote, Grid3X3, Utensils, Apple, Wine, Barrel, Beer, GlassWater, Hamburger, Shrimp, Fish, Beef, CookingPot,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { categories } from '@/data/categories';
 import {useEffect, useState} from "react";
-import {Product} from "@/types";
+import {Category, Product} from "@/types";
 import apiClient from "@/lib/api";
 import {toast} from "sonner";
 
 const categoryIcons = {
-  pizza: Pizza,
-  paste: UtensilsCrossed,
-  burgeri: ChefHat,
-  salate: Leaf,
-  desert: Cake,
-  bauturi: Coffee,
+  pizza: Pizza, utensils: UtensilsCrossed, chefhat: ChefHat, leaf: Leaf, cake: Cake,
+  coffee: Coffee, grid: Grid3X3, utensilsalt: Utensils, apple: Apple, wine: Wine,
+  barrel: Barrel, beer: Beer, glasswater: GlassWater, hamburger: Hamburger,
+  shrimp: Shrimp, fish: Fish, beef: Beef, cookingpot: CookingPot,
 };
 
 const testimonials = [
@@ -61,7 +58,22 @@ const testimonials = [
 
 export default function HomePage() {
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [popularCategories, setPopularCategories] = useState<Category[]>();
 
+    useEffect(() => {
+        const fetchPopularCategories = async () => {
+          try {
+            const response = await apiClient.getPopularCategories();
+
+            setPopularCategories(response);
+          } catch (error) {
+            console.error(error);
+            toast.error('Eroare la încărcarea categoriilor');
+          }
+        }
+
+      fetchPopularCategories()
+    }, []);
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -165,40 +177,42 @@ export default function HomePage() {
         </section>
 
         {/* Categories Section */}
-        <section className="py-16 bg-gradient-to-b from-background to-muted/20">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                Categorii <span className="text-[hsl(var(--primary))]">populare</span>
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Descoperă varietatea noastră de preparate, de la pizza artizanală la deserturi rafinate
-              </p>
-            </div>
+        {popularCategories && popularCategories.length > 0 &&  (
+            <section className="py-16 bg-gradient-to-b from-background to-muted/20">
+              <div className="container mx-auto px-4">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+                    Categorii <span className="text-[hsl(var(--primary))]">populare</span>
+                  </h2>
+                  <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                    Descoperă varietatea noastră de preparate, de la pizza artizanală la deserturi rafinate
+                  </p>
+                </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {categories.map((category) => {
-                const Icon = categoryIcons[category.id as keyof typeof categoryIcons];
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                  {popularCategories.map((category) => {
+                    const Icon = categoryIcons[category.icon as keyof typeof categoryIcons];
 
-                return (
-                  <Link key={category.id} href={`/meniu?category=${category.id}`}>
-                    <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-2 cursor-pointer h-full">
-                      <CardContent className="p-6 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center group-hover:bg-[hsl(var(--primary))]/20 transition-colors">
-                          <Icon className="w-8 h-8 text-[hsl(var(--primary))]" />
-                        </div>
-                        <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
-                        <p className="text-muted-foreground text-sm line-clamp-2">
-                          {category.description}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+                    return (
+                        <Link key={category.id} href={`/meniu?category=${category.id}`}>
+                          <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-2 cursor-pointer h-full">
+                            <CardContent className="p-6 text-center">
+                              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[hsl(var(--primary))]/10 flex items-center justify-center group-hover:bg-[hsl(var(--primary))]/20 transition-colors">
+                                <Icon className="w-8 h-8 text-[hsl(var(--primary))]" />
+                              </div>
+                              <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
+                              <p className="text-muted-foreground text-sm line-clamp-2">
+                                {category.description}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+        )}
 
         {/* Recommended Products */}
         <section className="py-16">

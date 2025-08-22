@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { z } from 'zod';
 import apiClient from '@/lib/api';
+import {Checkbox} from "@/components/ui/checkbox";
 
 const categorySchema = z.object({
   name: z.string().min(2, 'Numele trebuie să aibă cel puțin 2 caractere').max(50, 'Numele este prea lung'),
@@ -26,6 +27,7 @@ const categorySchema = z.object({
   description: z.string().min(10, 'Descrierea trebuie să aibă cel puțin 10 caractere').max(200, 'Descrierea este prea lungă'),
   icon: z.string().min(1, 'Alegeți o iconiță'),
   order: z.number().min(1, 'Ordinea trebuie să fie pozitivă').max(100, 'Ordinea este prea mare'),
+  is_popular: z.boolean().optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -64,6 +66,7 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
       description: category?.description || '',
       icon: category?.icon || '',
       order: category?.order || 1,
+      is_popular: category?.is_popular || false,
     },
   });
 
@@ -188,6 +191,16 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
           />
           <p className="text-xs text-muted-foreground">Determină ordinea de afișare (1 = primul)</p>
           {errors.order && <p className="text-sm text-destructive">{errors.order.message}</p>}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="order">Ordine *</Label>
+          <Checkbox
+              id="is_popular"
+              {...register('is_popular')}
+              className={errors.is_popular ? 'border-destructive' : ''}
+          />
+          <p className="text-xs text-muted-foreground">Seteaza categorie populara (maxim 6)</p>
+          {errors.is_popular && <p className="text-sm text-destructive">{errors.is_popular.message}</p>}
         </div>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">

@@ -15,7 +15,6 @@ import apiClient from '@/lib/api';
 import { Category, Product } from '@/types';
 
 export default function MenuPage() {
-  // Wrap componentul care folosește useSearchParams în Suspense
   return (
       <Suspense
           fallback={
@@ -63,6 +62,7 @@ function MenuPageContent() {
     fetchAll();
   }, []);
 
+  // Normalize + resolve selected value (id or slug) to string id
   const resolveCategoryId = useCallback(
       (value: string | null): string | null => {
         if (!value || value === 'all') return null;
@@ -85,6 +85,7 @@ function MenuPageContent() {
     return cat?.name ?? 'Categorie';
   }, [selectedCategoryId, categories]);
 
+  // Search set
   const searchIds = useMemo(() => {
     if (!searchQuery.trim()) return null;
     const query = searchQuery.trim().toLowerCase();
@@ -92,15 +93,7 @@ function MenuPageContent() {
     return new Set(matches.map((p) => p.id));
   }, [searchQuery, products]);
 
-  const grouped = useMemo(() => {
-    return categories.map((cat) => {
-      const items = products.filter(
-          (p) => String(p.category.id) === String(cat.id) && (!searchIds || searchIds.has(p.id))
-      );
-      return { cat, items };
-    });
-  }, [categories, products, searchIds]);
-
+  // Count products per category (global)
   const productCounts = useMemo(() => {
     const counts: Record<string, number> = { all: products.length };
     products.forEach((p) => {
@@ -110,11 +103,43 @@ function MenuPageContent() {
     return counts;
   }, [products]);
 
+  // Only categories that have at least one product
+  const categoriesWithProducts = useMemo(
+      () => categories.filter((c) => (productCounts[String(c.id)] ?? 0) > 0),
+      [categories, productCounts]
+  );
+
+  // Active category id for UI (ensure it's one of the filtered categories)
+  const activeCategoryIdForUI = useMemo(() => {
+    const resolved = selectedCategoryId;
+    if (resolved && categoriesWithProducts.some((c) => String(c.id) === resolved)) {
+      return resolved;
+    }
+    // fallback to first available filtered category (prevents "no active" on desktop chips)
+    return categoriesWithProducts.length ? String(categoriesWithProducts[0].id) : '';
+  }, [selectedCategoryId, categoriesWithProducts]);
+
+  // Group products by filtered categories
+  const grouped = useMemo(() => {
+    return categoriesWithProducts.map((cat) => {
+      const items = products.filter(
+          (p) =>
+              String(p.category.id) === String(cat.id) &&
+              (!searchIds || searchIds.has(p.id))
+      );
+      return { cat, items };
+    });
+  }, [categoriesWithProducts, products, searchIds]);
+
   const clearSearch = () => setSearchQuery('');
 
+  // Mobile chips (filtered)
   const categoryChips = useMemo(() => {
-    return [...categories.map((c) => ({ id: c.id, name: c.name }))];
-  }, [categories]);
+    return categoriesWithProducts.map((c) => ({
+      id: String(c.id),
+      name: c.name,
+    }));
+  }, [categoriesWithProducts]);
 
   const chipsContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
@@ -143,12 +168,13 @@ function MenuPageContent() {
   );
 
   const handleSelectCategory = (value: string) => {
+    // value can be id (string) or slug depending on source; keep raw in state
     setSelectedCategory(value);
     const id = resolveCategoryId(value) ?? (value === 'all' ? null : value);
     if (id) scrollToCategory(id);
   };
 
-  // Setează selectedCategory doar după ce categoriile sunt încărcate (pentru că poate fi slug)
+  // Ensure selectedCategory reflects param once categories are loaded
   useEffect(() => {
     if (categories.length === 0) return;
     const resolvedId = resolveCategoryId(initialCategoryParam);
@@ -157,7 +183,7 @@ function MenuPageContent() {
     }
   }, [categories, initialCategoryParam, resolveCategoryId]);
 
-  // Observer pe scroll – folosește ordinea DOM ca să nu depindă de sortări
+  // Sync active chip while scrolling (DOM order, filtered sections only)
   useEffect(() => {
     const sections = Array.from(
         document.querySelectorAll('section[id^="cat-"]')
@@ -180,6 +206,7 @@ function MenuPageContent() {
         }
       });
 
+      // Only update if the resolved id differs from what the scroll indicates
       if (activeId && resolveCategoryId(selectedCategory) !== activeId) {
         setSelectedCategory(activeId);
 
@@ -196,7 +223,7 @@ function MenuPageContent() {
       }
     };
 
-    onScroll(); // inițial
+    onScroll(); // initial
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [STICKY_OFFSET, selectedCategory, resolveCategoryId]);
@@ -227,7 +254,7 @@ function MenuPageContent() {
 
           <div className="container mx-auto px-4 py-8">
             <div className="flex flex-col lg:flex-row gap-8">
-              {/* Sidebar */}
+              {/* Sidebar (DESKTOP) */}
               <aside className="hidden lg:block w-64 flex-shrink-0">
                 <div className="sticky top-24 space-y-6">
                   <div className="space-y-4">
@@ -252,16 +279,16 @@ function MenuPageContent() {
                     </div>
                   </div>
 
+                  {/* FOLLOW FILTERED CATEGORIES ON DESKTOP */}
                   <CategoryFilter
-                      selectedCategory={selectedCategoryId ?? 'all'}
+                      selectedCategory={activeCategoryIdForUI}
                       onCategoryChange={handleSelectCategory}
                       productCounts={productCounts}
                       categories={[
-                        { id: 'all', name: 'Toate', icon: 'grid' },
-                        ...categories.map((c) => ({
-                          id: c.id,
+                        ...categoriesWithProducts.map((c) => ({
+                          id: String(c.id),
                           name: c.name,
-                          icon: (c as any).icon, // păstrează dacă ai icon
+                          icon: (c as any).icon,
                         })),
                       ]}
                   />
@@ -270,16 +297,15 @@ function MenuPageContent() {
 
               {/* Main */}
               <main className="flex-1">
-                {/* Mobile category chips */}
+                {/* Mobile category chips (FILTERED) */}
                 <div className="lg:hidden sticky-under-header -mx-4 px-4 mb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                   <div
                       ref={chipsContainerRef}
                       className="flex items-stretch gap-2 overflow-x-auto py-2 hide-scrollbar snap-x snap-mandatory"
                   >
                     {categoryChips.map((cat) => {
-                      const isActive = resolveCategoryId(selectedCategory) === String(cat.id);
-                      const count =
-                          (productCounts as any)[cat.id] ?? 0;
+                      const isActive = activeCategoryIdForUI === String(cat.id);
+                      const count = productCounts[String(cat.id)] ?? 0;
 
                       return (
                           <button
@@ -309,9 +335,10 @@ function MenuPageContent() {
                   </div>
                 </div>
 
-                {/* Lista de produse */}
+                {/* Lista de produse (doar secțiuni cu produse) */}
                 <div className="space-y-10">
                   {grouped.map(({ cat, items }) => {
+                    // dacă căutarea e activă și nu sunt rezultate -> nu afișăm secțiunea
                     if (searchQuery.trim() && items.length === 0) return null;
 
                     return (
@@ -324,7 +351,9 @@ function MenuPageContent() {
                         >
                           <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-semibold">{cat.name}</h3>
-                            <Badge variant="secondary">{productCounts[String(cat.id)] ?? 0}</Badge>
+                            <Badge variant="secondary">
+                              {productCounts[String(cat.id)] ?? 0}
+                            </Badge>
                           </div>
 
                           {items.length > 0 ? (
@@ -338,11 +367,7 @@ function MenuPageContent() {
                                     />
                                 ))}
                               </div>
-                          ) : (
-                              <div className="rounded border text-muted-foreground p-6 text-sm">
-                                Nu există produse în această categorie momentan.
-                              </div>
-                          )}
+                          ) : null}
                         </section>
                     );
                   })}

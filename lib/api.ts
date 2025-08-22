@@ -241,6 +241,12 @@ class ApiClient {
             body: JSON.stringify({ orders }),
         });
     }
+
+    async getPopularCategories() {
+        return this.request<any>('/categories/popular', {
+            next: { revalidate: 3600 },
+        });
+    }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

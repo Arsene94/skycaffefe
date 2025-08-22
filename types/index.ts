@@ -25,6 +25,7 @@ export interface Category {
   icon: string;
   description: string;
   order: number;
+  is_popular: boolean;
 }
 
 export interface CartItem {
