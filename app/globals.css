@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 58% 96%;     /* crem cald */
+    --foreground: 222 20% 12%;    /* charcoal slate */
+    --card: 45 58% 98%;
+    --card-foreground: 222 20% 12%;
+    --popover: 45 58% 98%;
+    --popover-foreground: 222 20% 12%;
+
+    --primary: 150 80% 38%;       /* verde Sky (CTA, linkuri) */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 45 40% 92%;      /* crem deschis (chipuri, badge-uri) */
+    --secondary-foreground: 222 20% 12%;
+
+    --muted: 45 30% 88%;
+    --muted-foreground: 222 12% 40%;
+
+    --accent: 46 85% 52%;         /* auriu – potrivit cu logo-ul */
+    --accent-foreground: 222 20% 12%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 45 28% 82%;
+    --input: 45 28% 82%;
+    --ring: 150 90% 45%;
+    --radius: 0.5rem;
+
+    /* Extra brand tokens pentru hero/accente luminoase */
+    --hero: 275 78% 56%;          /* violet neon (overlay hero) */
+    --hero-contrast: 150 80% 40%; /* verde neon (gradient cu violet) */
+  }
+
+  .dark {
+    --background: 225 18% 10%;    /* charcoal albastruie (match cu poza) */
+    --foreground: 45 40% 92%;     /* crem luminos */
+
+    --card: 225 18% 13%;
+    --card-foreground: 45 40% 92%;
+
+    --popover: 225 18% 13%;
+    --popover-foreground: 45 40% 92%;
+
+    --primary: 150 85% 48%;       /* verde mai electric */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 225 15% 18%;
+    --secondary-foreground: 45 40% 92%;
+
+    --muted: 225 12% 22%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 46 90% 58%;         /* auriu vizibil pe dark */
+    --accent-foreground: 225 18% 12%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 225 15% 18%;
+    --input: 225 15% 18%;
+    --ring: 150 90% 50%;
+
+    --hero: 275 85% 60%;          /* violet mai intens */
+    --hero-contrast: 150 85% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth animations */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* sticky sub header, cu fallback 64px */
+.sticky-under-header {
+  position: sticky;
+  top: var(--site-header-height, 64px);
+  z-index: 30;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
