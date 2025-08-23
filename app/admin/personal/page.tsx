@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,7 +80,7 @@ export default function AdminPersonalPage() {
     }, []);
 
     // load staff
-    const loadStaff = async () => {
+    const loadStaff = useCallback(async () => {
         try {
             setLoading(true);
             const res = await apiClient.getStaff({ search: debounced || '', page, pageSize: PAGE_SIZE });
@@ -103,9 +103,10 @@ export default function AdminPersonalPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [debounced, page]);
 
-    useEffect(() => { loadStaff(); /* eslint-disable-next-line */ }, [page, debounced]);
+    useEffect(() => { loadStaff(); /* eslint-disable-next-line */ }, [page, debounced, loadStaff]);
+
 
     // pagination helpers
     const startIndex = useMemo(() => (total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1), [page, total]);
