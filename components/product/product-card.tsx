@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingCart, Star } from 'lucide-react';
-import { Product } from '@/types';
+import {EU_ALLERGENS, Product} from '@/types';
 import { useCartStore } from '@/store/cart';
 import { formatPrice } from '@/lib/format';
 import { toast } from 'sonner';
@@ -82,6 +82,10 @@ console.log(product)
             {product.description}
           </p>
 
+          <p className="text-muted-foreground text-sm line-clamp-2">
+            {product.nutritional_values}
+          </p>
+
           {/* Tags */}
           {product.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -91,6 +95,15 @@ console.log(product)
                 </Badge>
               ))}
             </div>
+          )}
+
+          {/* Allergens */}
+          {product?.allergens?.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                  {EU_ALLERGENS.filter(a => product.allergens.includes(a.id)).map(a => (
+                      <Badge key={a.id} variant="default" className="text-xs px-2 py-0.5">{a.label}</Badge>
+                  ))}
+              </div>
           )}
 
           <Button
