@@ -130,3 +130,59 @@ export type OfferHint = {
   code: string;
   message: string;
 };
+
+export type ClientAddress = {
+  id: string;
+  address: string;
+  city?: string | null;
+  isDefault: boolean;
+  lastUsed?: string | null;
+  label?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+};
+
+export type Client = {
+  id: string;
+  name: string;
+  phone?: string | null;
+  email: string;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrder?: string | null;
+  lastOrderAt?: Date | null | undefined;
+  created_at?: Date | null;
+  addresses: ClientAddress[];
+};
+
+export type DeliveryZone = {
+  id: number | string;
+  name: string;
+  description?: string | null;
+  deliveryFee: number;
+  deliveryTime?: string | null;
+  minOrder: number;
+  active: boolean;
+  areas: string[];
+  createdAt?: string; // ISO
+  updatedAt?: string;
+};
+
+export type ViewOrder = {
+  id: string;
+  createdAt: Date;
+  status?: string;
+  deliveryType: 'delivery' | 'pickup';
+  deliveryFee: number;
+  subtotal: number;
+  discount: number;
+  total: number;
+  paymentMethod: 'cash' | 'card';
+  items: { product: { id: number | string; name: string; price: number }; quantity: number }[];
+  customerInfo: {
+    name: string;
+    phone: string;
+    address: string;
+    notes?: string;
+  };
+};

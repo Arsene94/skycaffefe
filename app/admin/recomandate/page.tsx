@@ -1,39 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import Image from 'next/image';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import {
-  Star,
-  GripVertical,
-  Plus,
-  Minus,
-  Calendar,
-  Clock
-} from 'lucide-react';
-import { formatPrice } from '@/lib/format';
-import { cn } from '@/lib/utils';
+import {toast} from 'sonner';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
+import {Badge} from '@/components/ui/badge';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/dialog';
+import {Calendar, Clock, GripVertical, Minus, Plus, Star} from 'lucide-react';
+import {formatPrice} from '@/lib/format';
+import {cn} from '@/lib/utils';
 import apiClient from '@/lib/api';
-import type { Product, Category } from '@/types';
-import { CategoryCombobox } from '@/components/admin/CategoryCombobox';
+import type {Category, Product} from '@/types';
+import {CategoryCombobox} from '@/components/admin/CategoryCombobox';
+import {useAuth} from "@/contexts/auth-context";
 
 type PeriodUnit = 'days' | 'weeks' | 'months';
 
@@ -64,29 +47,7 @@ export default function AdminRecommendedPage() {
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Helpers
-  const formatPeriod = (duration: number, unit: PeriodUnit) => {
-    const map: Record<PeriodUnit, [one: string, many: string]> = {
-      days: ['zi', 'zile'],
-      weeks: ['săptămână', 'săptămâni'],
-      months: ['lună', 'luni'],
-    };
-    const [one, many] = map[unit];
-    return `${duration} ${duration === 1 ? one : many}`;
-  };
-
-  const daysRemaining = (endISO: string | null) => {
-    if (!endISO) return null;
-    const now = new Date();
-    const end = new Date(endISO);
-    const diff = end.getTime() - now.getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
-  };
-
-  const isExpired = (endISO: string | null) => {
-    if (!endISO) return false;
-    return new Date() > new Date(endISO);
-  };
+  const { user } = useAuth();
 
   // Load categories
   useEffect(() => {
@@ -140,6 +101,34 @@ export default function AdminRecommendedPage() {
       [categories, selectedCategory]
   );
 
+  if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+    return <div>Nu ai permisiunea de a accesa această pagină.</div>;
+  }
+
+  // Helpers
+  const formatPeriod = (duration: number, unit: PeriodUnit) => {
+    const map: Record<PeriodUnit, [one: string, many: string]> = {
+      days: ['zi', 'zile'],
+      weeks: ['săptămână', 'săptămâni'],
+      months: ['lună', 'luni'],
+    };
+    const [one, many] = map[unit];
+    return `${duration} ${duration === 1 ? one : many}`;
+  };
+
+  const daysRemaining = (endISO: string | null) => {
+    if (!endISO) return null;
+    const now = new Date();
+    const end = new Date(endISO);
+    const diff = end.getTime() - now.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const isExpired = (endISO: string | null) => {
+    if (!endISO) return false;
+    return new Date() > new Date(endISO);
+  };
+
   // Actions
   const handleAddWithPeriod = async () => {
     if (!selectedProduct || !selectedCategoryObj) return;
@@ -152,8 +141,7 @@ export default function AdminRecommendedPage() {
       });
       const newItem = res.data as ScheduledRecommendation;
       setQueue(prev => {
-        const next = [...prev, newItem].sort((a, b) => a.position - b.position);
-        return next;
+        return [...prev, newItem].sort((a, b) => a.position - b.position);
       });
       setAvailableProducts(prev => prev.filter(p => p.id !== selectedProduct.id));
       toast.success(`${selectedProduct.name} adăugat în programarea recomandărilor`);

@@ -105,27 +105,81 @@ class ApiClient {
         return response;
     }
 
-    async register(userData: {
+    async register(payload: {
+        name: string;
         email: string;
         password: string;
-        name: string;
-        address: string;
-        phone: string;
+        phone?: string;
+        address?: string;
+        city?: string;
+        label?: string;
     }) {
-        const response = await this.request<{
-            access_token: string;
-            user: any;
-        }>('/users/register', {
+        const resp = await this.request<{ access_token: string; user: any }>('/users/register', {
             method: 'POST',
-            body: JSON.stringify(userData),
+            body: JSON.stringify(payload),
         });
-
-        this.setToken(response.access_token);
-        return response;
+        this.setToken(resp.access_token);
+        return resp;
     }
 
     async getProfile() {
         return this.request<any>('/users/profile');
+    }
+
+    async updateProfile(payload: Partial<{ name: string; phone: string }>) {
+        return this.request<any>('/users/profile', {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+            credentials: 'include',
+        });
+    }
+
+// --- Addresses (user)
+    async getMyAddresses() {
+        return this.request<any>('/users/addresses');
+    }
+    async createAddress(payload: { city: string; address: string; label?: string | null; lat?: number | null; lng?: number | null }) {
+        return this.request<any>('/users/addresses', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+    async updateAddress(id: string | number, payload: Partial<{ city: string; address: string; label?: string | null; lat?: number | null; lng?: number | null }>) {
+        return this.request<any>(`/users/addresses/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+    }
+    async deleteAddress(id: string | number) {
+        return this.request<void>(`/users/addresses/${id}`, { method: 'DELETE' });
+    }
+    async setDefaultAddress(id: string | number) {
+        return this.request<any>(`/users/addresses/${id}/default`, { method: 'POST' });
+    }
+
+    async lookupClientByPhone(phone: string) {
+        return this.request<any>(`/admin/clients/lookup?phone=${encodeURIComponent(phone)}`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+    }
+
+    async searchProducts(params: { q: string; pageSize?: number }) {
+        const qs = new URLSearchParams();
+        if (params.q) qs.set('q', params.q);
+        if (params.pageSize) qs.set('pageSize', String(params.pageSize));
+        return this.request<any>(`/products/search?${qs.toString()}`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+    }
+
+    async logout() {
+        try {
+            await this.request('/users/logout', { method: 'POST' });
+        } finally {
+            this.removeToken();
+        }
     }
 
     // ----------------
@@ -151,7 +205,6 @@ class ApiClient {
             method: 'POST',
             body: formData,
             credentials: 'include',
-            // NOTE: no Content-Type here; browser sets multipart boundary
         });
     }
 
@@ -309,6 +362,16 @@ class ApiClient {
         return this.request<any>(`/recommendations/active${qs}`);
     }
 
+    async getPopularProducts(params?: { limit?: number; days?: number }) {
+        const qs = new URLSearchParams();
+        if (params?.limit) qs.set('limit', String(params.limit));
+        if (params?.days) qs.set('days', String(params.days));
+        return this.request<any>(`/admin/analytics/popular-products?${qs.toString()}`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+    }
+
     // ----------------
     // Offers
     // ----------------
@@ -413,6 +476,150 @@ class ApiClient {
             body: JSON.stringify({ product_ids }),
         });
     }
+
+    // ---- Clients (Admin) ----
+    async getAdminClients(params?: { search?: string; page?: number; pageSize?: number }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/admin/clients${qs}`);
+    }
+
+    async getAdminClient(id: string | number) {
+        return this.request<any>(`/admin/clients/${id}`);
+    }
+
+    // ----------------
+// Delivery Zones
+// ----------------
+    async getAdminDeliveryZones(params?: {
+        search?: string;
+        active?: '1' | '0';
+        page?: number;
+        pageSize?: number;
+    }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/admin/delivery-zones${qs}`);
+    }
+
+    async getDeliveryZones(params?: { active?: 1 | 0 }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/delivery-zones${qs}`);
+    }
+
+    async createDeliveryZone(payload: {
+        name: string;
+        description?: string;
+        deliveryFee: number;
+        deliveryTime?: string | null;
+        minOrder: number;
+        active?: boolean;
+        areas: string[];
+    }) {
+        return this.request<any>(`/admin/delivery-zones`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async updateDeliveryZone(
+        id: string | number,
+        payload: Partial<{
+            name: string;
+            description?: string | null;
+            deliveryFee: number;
+            deliveryTime?: string | null;
+            minOrder: number;
+            active?: boolean;
+            areas: string[];
+        }>
+    ) {
+        return this.request<any>(`/admin/delivery-zones/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async deleteDeliveryZone(id: string | number) {
+        return this.request<any>(`/admin/delivery-zones/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async toggleDeliveryZone(id: string | number) {
+        return this.request<any>(`/admin/delivery-zones/${id}/toggle`, {
+            method: 'POST',
+        });
+    }
+
+    // ----------------
+    // Orders ✅
+    // ----------------
+    // Tipul payload-ului de creare (aliniat cu controllerul)
+    // (Poți muta într-un fișier de tipuri dacă vrei)
+    async createOrder(payload: {
+        delivery_type: 'delivery' | 'pickup';
+        payment_method: 'cash' | 'card';
+        customer_name: string;
+        customer_phone: string;
+        address_id?: number;
+        address_text?: string | null;
+        delivery_zone_id?: number | null;
+        delivery_fee: number;
+        notes?: string | null;
+        items: { product_id: number; quantity: number }[];
+        discount?: number;
+        applied_offers?: any[] | null;
+    }) {
+        return this.request<{ id: string; data: any }>(`/orders`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    // listă comenzi (doar dacă ești logat; client -> ale lui; staff -> toate)
+    async getOrders(params?: { status?: string; page?: number; pageSize?: number }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/orders${qs}`);
+    }
+
+    async getMyOrders() {
+        return this.request<any>('/orders'); // index pentru utilizatorul autentificat
+    }
+    async getOrder(id: string | number) {
+        return this.request<any>(`/orders/${id}`);
+    }
+
+    async updateOrderStatus(id: string | number, status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'completed' | 'canceled') {
+        return this.request<any>(`/orders/${id}/status`, {
+            method: 'POST',
+            body: JSON.stringify({ status }),
+        });
+    }
+
+    async cancelOrder(id: string | number) {
+        return this.request<any>(`/orders/${id}/cancel`, {
+            method: 'POST',
+        });
+    }
+
+    // Staff (admin/manager)
+    async getStaff(params?: { search?: string; page?: number; pageSize?: number }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/admin/staff${qs}`);
+    }
+
+    async createStaff(payload: {
+        name: string;
+        email?: string | null;
+        phone?: string | null;
+        role: 'MANAGER' | 'EMPLOYEE';
+        pin: string; // 4+ cifre
+    }) {
+        return this.request<any>('/admin/staff', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

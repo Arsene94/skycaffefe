@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { Category, Product } from '@/types';
 import apiClient from '@/lib/api';
 import { CategoryCombobox } from '@/components/admin/CategoryCombobox';
+import {useAuth} from "@/contexts/auth-context";
 
 const PAGE_SIZE = 10;
 
@@ -29,6 +30,7 @@ export default function AdminProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const totalPages = Math.ceil(totalProducts / PAGE_SIZE);
+  const { user } = useAuth();
 
   // Debounce search input
   useEffect(() => {
@@ -75,6 +77,10 @@ export default function AdminProductsPage() {
   useEffect(() => {
     reloadProducts();
   }, [reloadProducts]);
+
+  if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+    return <div>Nu ai permisiunea de a accesa această pagină.</div>;
+  }
 
   const handleToggleAvailability = async (productId: number | string) => {
     try {

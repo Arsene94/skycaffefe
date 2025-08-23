@@ -29,7 +29,7 @@ export default function AdminLayout({
   }
 
   // Show loading or redirect if not authenticated
-  if (user?.role !== 'ADMIN' && user?.role !== 'EMPLOYEE') {
+  if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER' && user?.role !== 'EMPLOYEE') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">

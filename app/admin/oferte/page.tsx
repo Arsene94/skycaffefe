@@ -17,6 +17,7 @@ import {
 import { OfferForm } from '@/components/admin/offer-form';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api';
+import {useAuth} from "@/contexts/auth-context";
 
 type BXGY = { buy: number; get: number; limit?: number | null };
 
@@ -59,6 +60,7 @@ export default function AdminOffersPage() {
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   // ------- fetch data -------
   const loadAll = async () => {
@@ -157,6 +159,10 @@ export default function AdminOffersPage() {
     items.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
     return items;
   }, [offers, selectedType, searchQuery]);
+
+  if (user?.role !== 'ADMIN') {
+    return <div>Nu ai permisiunea de a accesa această pagină.</div>;
+  }
 
   // ------- actions -------
   const handleToggleActive = async (offer: OfferItem) => {

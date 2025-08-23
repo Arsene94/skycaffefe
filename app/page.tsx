@@ -134,11 +134,12 @@ export default function HomePage() {
           {/* Hero Section */}
           <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center overflow-hidden">
             {/* Background Image */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh] overflow-hidden">
               <Image
                   src="/hero.jpeg"
                   alt="Sky Caffe Rooftop"
                   fill
+                  sizes="100vw"
                   className="object-cover"
                   priority
               />

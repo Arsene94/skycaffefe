@@ -24,6 +24,7 @@ import { CategoryForm } from '@/components/admin/category-form';
 import { toast } from 'sonner';
 import {Category, Product} from '@/types';
 import apiClient from "@/lib/api";
+import {useAuth} from "@/contexts/auth-context";
 
 const categoryIcons = {
   pizza: Pizza, utensils: UtensilsCrossed, chefhat: ChefHat, leaf: Leaf, cake: Cake,
@@ -43,6 +44,7 @@ export default function AdminCategoriesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>(); // Simulated products data
+  const { user } = useAuth();
 
   // Debounce search input
   useEffect(() => {
@@ -82,6 +84,10 @@ export default function AdminCategoriesPage() {
   useEffect(() => {
     reloadCategories();
   }, [reloadCategories]);
+
+  if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+    return <div>Nu ai permisiunea de a accesa această pagină.</div>;
+  }
 
   const getProductCount = (categoryId: string) =>
       products?.filter(product => product.category.id === categoryId).length;

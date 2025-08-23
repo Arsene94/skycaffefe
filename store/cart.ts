@@ -6,7 +6,6 @@ import { persist } from 'zustand/middleware';
 import apiClient from '@/lib/api';
 import type { Product, CartItem } from '@/types';
 
-// ---- Tipuri pentru ofertele din API (normalizate) ----
 type OfferType = 'PERCENT' | 'FIXED' | 'BXGY';
 type ApplicationType = 'cart' | 'category' | 'product_ids';
 
@@ -36,7 +35,15 @@ type OfferDTO = {
   endsAt?: string | null;
 };
 
-// -------- Helpers eligibilitate + preț unitar ----------
+// ✅ tip mic pentru zona salvată în store
+type DeliveryZoneSlim = {
+  id: number | string;
+  name: string;
+  deliveryFee: number;
+  minOrder: number;
+};
+
+// -------- eligibilitate ----------
 function eligibleItemsForOffer(cartItems: CartItem[], offer: OfferDTO) {
   const isEligible = (ci: CartItem) => {
     switch (offer.applicationType) {
@@ -59,7 +66,6 @@ function eligibleItemsForOffer(cartItems: CartItem[], offer: OfferDTO) {
   const qty = eligibleCartItems.reduce((s, i) => s + i.quantity, 0);
   const subtotal = eligibleCartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
 
-  // prețuri unitare (pt BXGY)
   const unitPrices: number[] = [];
   eligibleCartItems.forEach((i) => {
     for (let k = 0; k < i.quantity; k++) unitPrices.push(i.product.price);
@@ -69,7 +75,6 @@ function eligibleItemsForOffer(cartItems: CartItem[], offer: OfferDTO) {
   return { eligibleCartItems, qty, subtotal, unitPrices };
 }
 
-// cel mai ieftin produs eligibil din coș (ca exemplu în mesaj)
 function pickCheapestEligibleProduct(eligibleCartItems: CartItem[]) {
   if (!eligibleCartItems.length) return null;
   let best: { price: number; id: string | number; name: string } | null = null;
@@ -82,7 +87,7 @@ function pickCheapestEligibleProduct(eligibleCartItems: CartItem[]) {
   return best ? { id: best.id, name: best.name } : null;
 }
 
-// ---------- Discount ----------
+// ---------- Discount per ofertă ----------
 function calcOfferDiscount(cartItems: CartItem[], offer: OfferDTO): number {
   const { qty, subtotal, unitPrices } = eligibleItemsForOffer(cartItems, offer);
 
@@ -113,6 +118,7 @@ function calcOfferDiscount(cartItems: CartItem[], offer: OfferDTO): number {
   }
 }
 
+// ---------- Sumă discount total (respectă stacking) ----------
 function calculateDiscount(cartItems: CartItem[], offers: OfferDTO[]): number {
   if (!offers?.length) return 0;
   const sorted = [...offers]
@@ -124,14 +130,44 @@ function calculateDiscount(cartItems: CartItem[], offers: OfferDTO[]): number {
 
   for (const offer of sorted) {
     const d = calcOfferDiscount(cartItems, offer);
-    if (!offer.stackable && !nonStackApplied && d > 0) {
-      totalDiscount += d;
-      nonStackApplied = true;
-    } else if (offer.stackable && d > 0) {
+    if (!offer.stackable) {
+      if (!nonStackApplied && d > 0) {
+        totalDiscount += d;
+        nonStackApplied = true;
+      }
+    } else if (d > 0) {
       totalDiscount += d;
     }
   }
   return totalDiscount;
+}
+
+// ---------- Ofertă aplicată: pentru mesaje UI ----------
+type AppliedOffer = { code: string; name: string; amount: number; type: OfferType };
+
+function calculateAppliedOffers(cartItems: CartItem[], offers: OfferDTO[]): AppliedOffer[] {
+  if (!offers?.length) return [];
+  const sorted = [...offers]
+      .filter(o => o.active && o.isActiveNow !== false)
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+
+  const applied: AppliedOffer[] = [];
+  let nonStackApplied = false;
+
+  for (const offer of sorted) {
+    const d = calcOfferDiscount(cartItems, offer);
+    if (d <= 0) continue;
+
+    if (!offer.stackable) {
+      if (!nonStackApplied) {
+        applied.push({ code: offer.code, name: offer.name, amount: d, type: offer.type });
+        nonStackApplied = true;
+      }
+    } else {
+      applied.push({ code: offer.code, name: offer.name, amount: d, type: offer.type });
+    }
+  }
+  return applied;
 }
 
 // ---------- Hints ----------
@@ -140,12 +176,10 @@ type OfferHint = {
   message: string;
   missingCount?: number;
   missingAmount?: number;
-  suggestedProduct?: { id: string | number; name: string }; // ✅
+  suggestedProduct?: { id: string | number; name: string };
+  success?: boolean;
 };
-
-function pluralProd(n: number) {
-  return n === 1 ? 'produs' : 'produse';
-}
+function pluralProd(n: number) { return n === 1 ? 'produs' : 'produse'; }
 function scopeLabel(offer: OfferDTO): string {
   switch (offer.applicationType) {
     case 'cart': return 'coș';
@@ -154,14 +188,34 @@ function scopeLabel(offer: OfferDTO): string {
     default: return 'coș';
   }
 }
-
 function computeHintForOffer(cartItems: CartItem[], offer: OfferDTO): OfferHint | null {
   if (!(offer.active && offer.isActiveNow !== false)) return null;
 
   const { eligibleCartItems, qty, subtotal } = eligibleItemsForOffer(cartItems, offer);
-  const suggested = pickCheapestEligibleProduct(eligibleCartItems); // ✅
+  const suggested = pickCheapestEligibleProduct(eligibleCartItems);
 
-  // PERCENT / FIXED cu praguri
+  // Dacă deja se aplică discount pentru această ofertă, afișăm mesaj de succes
+  const dNow = calcOfferDiscount(cartItems, offer);
+  if (dNow > 0) {
+    // Notă: nu știm aici dacă a fost „tăiată” de o ofertă non-stack aplicată anterior.
+    // Mesajul final „aplicat” îl afișăm în Header din getAppliedOffers().
+    if (offer.type === 'BXGY') {
+      const bxgy = offer.conditions?.bxgy;
+      return {
+        code: offer.code,
+        message: `Felicitări! Ai beneficiat de oferta ${offer.name}${bxgy ? ` (${bxgy.buy}+${bxgy.get})` : ''}.`,
+        success: true,
+      };
+    }
+    // pentru PERCENT/FIXED: mesaj prietenos
+    return {
+      code: offer.code,
+      message: `Reducerea ${offer.name} este eligibilă pentru coșul tău.`,
+      success: true,
+    };
+  }
+
+  // altfel, ajutăm clientul cum să „atingă” oferta
   if (offer.type === 'PERCENT' || offer.type === 'FIXED') {
     if (offer.conditions?.minItems != null && qty < offer.conditions.minItems) {
       const missing = offer.conditions.minItems - qty;
@@ -184,14 +238,11 @@ function computeHintForOffer(cartItems: CartItem[], offer: OfferDTO): OfferHint 
     return null;
   }
 
-  // BXGY
   if (offer.type === 'BXGY') {
     const bxgy = offer.conditions?.bxgy;
     if (!bxgy) return null;
 
     const block = bxgy.buy + bxgy.get;
-
-    // nu are încă primul bloc complet
     if (qty < block) {
       const missing = block - qty;
       return {
@@ -201,8 +252,6 @@ function computeHintForOffer(cartItems: CartItem[], offer: OfferDTO): OfferHint 
         message: `Mai adaugă ${missing} ${pluralProd(missing)}${suggested ? ` (ex: ${suggested.name})` : ''} în ${scopeLabel(offer)} pentru a primi ${bxgy.get} gratis.`,
       };
     }
-
-    // ghidaj către următorul bloc (dacă nu s-a atins limita)
     if (!bxgy.limit || Math.floor(qty / block) < bxgy.limit) {
       const remainder = qty % block;
       if (remainder !== 0) {
@@ -215,21 +264,23 @@ function computeHintForOffer(cartItems: CartItem[], offer: OfferDTO): OfferHint 
         };
       }
     }
-
-    return null;
   }
 
   return null;
 }
 
-// ---- Store (restul rămâne la fel; doar getOfferHints e deja ok) ----
+// ---- Store ----
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
   subtotal: number;
   discount: number;
   total: number;
-  deliveryFee: number;
+
+  // ✅ livrare
+  deliveryType: 'delivery' | 'pickup';
+  deliveryZone: DeliveryZoneSlim | null;
+
   itemCount: number;
 
   offers: OfferDTO[];
@@ -245,13 +296,20 @@ interface CartStore {
   openCart: () => void;
 
   refreshOffers: () => Promise<void>;
-
   getOfferHints: () => OfferHint[];
+
+  // ✅ mesaje/aplicate
+  getAppliedOffers: () => AppliedOffer[];
+
+  // ✅ acțiuni livrare
+  setDeliveryType: (type: 'delivery' | 'pickup') => void;
+  setDeliveryZone: (zone: DeliveryZoneSlim | null) => void;
+  clearDeliveryZone: () => void;
 }
 
 type CartPersist = Pick<
     CartStore,
-    'items' | 'subtotal' | 'discount' | 'total' | 'itemCount' | 'deliveryFee'
+    'items' | 'subtotal' | 'discount' | 'total' | 'itemCount' | 'deliveryType' | 'deliveryZone'
 >;
 
 export const useCartStore = create<CartStore>()(
@@ -260,8 +318,9 @@ export const useCartStore = create<CartStore>()(
           const recalcTotals = (items: CartItem[]) => {
             const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
             const discount = calculateDiscount(items, get().offers);
-            const delivery = items.length > 0 ? get().deliveryFee : 0;
-            const total = Math.max(0, subtotal - discount + delivery);
+            const shouldChargeDelivery = items.length > 0 && get().deliveryType === 'delivery';
+            const fee = shouldChargeDelivery ? (get().deliveryZone?.deliveryFee ?? 0) : 0;
+            const total = Math.max(0, subtotal - discount + fee);
             const itemCount = items.reduce((s, i) => s + i.quantity, 0);
             set({ items, subtotal, discount, total, itemCount });
           };
@@ -278,7 +337,11 @@ export const useCartStore = create<CartStore>()(
             subtotal: 0,
             discount: 0,
             total: 0,
-            deliveryFee: 10,
+
+            // ✅ init livrare
+            deliveryType: 'delivery',
+            deliveryZone: null,
+
             itemCount: 0,
 
             offers: [],
@@ -355,8 +418,9 @@ export const useCartStore = create<CartStore>()(
                 if (items.length > 0) {
                   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
                   const discount = calculateDiscount(items, offers);
-                  const delivery = items.length > 0 ? get().deliveryFee : 0;
-                  const total = Math.max(0, subtotal - discount + delivery);
+                  const shouldChargeDelivery = items.length > 0 && get().deliveryType === 'delivery';
+                  const fee = shouldChargeDelivery ? (get().deliveryZone?.deliveryFee ?? 0) : 0;
+                  const total = Math.max(0, subtotal - discount + fee);
                   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
                   set({ subtotal, discount, total, itemCount });
                 }
@@ -385,6 +449,49 @@ export const useCartStore = create<CartStore>()(
               }
               return hints.slice(0, 2);
             },
+
+            // ✅ oferte aplicate (pentru mesaj clar în UI)
+            getAppliedOffers: () => {
+              const items = get().items;
+              return calculateAppliedOffers(items, get().offers);
+            },
+
+            // ✅ livrare
+            setDeliveryType: (type) => {
+              set({ deliveryType: type });
+              // recalc total cu noul tip
+              const items = get().items;
+              const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
+              const discount = calculateDiscount(items, get().offers);
+              const fee = items.length > 0 && type === 'delivery' ? (get().deliveryZone?.deliveryFee ?? 0) : 0;
+              const total = Math.max(0, subtotal - discount + fee);
+              const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+              set({ subtotal, discount, total, itemCount });
+            },
+
+            setDeliveryZone: (zone) => {
+              set({ deliveryZone: zone });
+              // recalc
+              const items = get().items;
+              const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
+              const discount = calculateDiscount(items, get().offers);
+              const fee = items.length > 0 && get().deliveryType === 'delivery' ? (zone?.deliveryFee ?? 0) : 0;
+              const total = Math.max(0, subtotal - discount + fee);
+              const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+              set({ subtotal, discount, total, itemCount });
+            },
+
+            clearDeliveryZone: () => {
+              set({ deliveryZone: null });
+              // recalc
+              const items = get().items;
+              const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
+              const discount = calculateDiscount(items, get().offers);
+              const fee = items.length > 0 && get().deliveryType === 'delivery' ? 0 : 0;
+              const total = Math.max(0, subtotal - discount + fee);
+              const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+              set({ subtotal, discount, total, itemCount });
+            },
           };
         },
         {
@@ -395,7 +502,9 @@ export const useCartStore = create<CartStore>()(
             discount: s.discount,
             total: s.total,
             itemCount: s.itemCount,
-            deliveryFee: s.deliveryFee,
+            // ✅ persistăm tipul și zona selectată
+            deliveryType: s.deliveryType,
+            deliveryZone: s.deliveryZone,
           }),
         }
     )

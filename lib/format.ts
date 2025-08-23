@@ -2,7 +2,13 @@ export function formatPrice(price: number): string {
   return `${price.toFixed(2)} lei`;
 }
 
-export function formatDate(date: Date): string {
+export function formatDate(input: string | Date): string {
+  const date = input instanceof Date ? input : new Date(input);
+
+  if (isNaN(date.getTime())) {
+    return ''; // fallback safe
+  }
+
   return new Intl.DateTimeFormat('ro-RO', {
     year: 'numeric',
     month: 'long',
@@ -12,12 +18,17 @@ export function formatDate(date: Date): string {
   }).format(date);
 }
 
-export function formatShortDate(date: Date): string {
+export function formatShortDate(input: string | Date): string {
+  const date = input instanceof Date ? input : new Date(input);
+
+  if (isNaN(date.getTime())) {
+    return '';
+  }
+
   return new Intl.DateTimeFormat('ro-RO', {
+    year: 'numeric',
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   }).format(date);
 }
 

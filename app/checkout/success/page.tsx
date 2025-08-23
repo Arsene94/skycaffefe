@@ -1,3 +1,4 @@
+// app/checkout/success/page.tsx
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
@@ -11,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, MapPin, Phone, CreditCard } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/format';
 import Link from 'next/link';
-import { Order } from '@/types';
+import apiClient from '@/lib/api';
+import { ViewOrder } from '@/types';
 
 export default function CheckoutSuccessPage() {
   return (
@@ -43,23 +45,102 @@ export default function CheckoutSuccessPage() {
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<ViewOrder | null>(null);
+
+  // mapare status pentru badge
+  const statusLabel: Record<string, string> = {
+    pending: 'În așteptare',
+    confirmed: 'Confirmată',
+    preparing: 'Se prepară',
+    out_for_delivery: 'În livrare',
+    completed: 'Finalizată',
+    canceled: 'Anulată',
+  };
 
   useEffect(() => {
     if (!orderId) return;
-    try {
-      const lastOrder = typeof window !== 'undefined' ? localStorage.getItem('lastOrder') : null;
-      if (!lastOrder) return;
-      const orderData = JSON.parse(lastOrder);
-      if (orderData?.id === orderId) {
-        setOrder({
-          ...orderData,
-          createdAt: new Date(orderData.createdAt),
-        });
+
+    (async () => {
+      // 1) încercăm backend
+      try {
+        const resp = await apiClient.getOrder(orderId);
+        const o = (resp as any)?.data ?? resp ?? {};
+
+        // normalizare produse
+        const items = Array.isArray(o.items)
+            ? o.items.map((it: any) => ({
+              product: {
+                id: it.product_id ?? it.product?.id ?? 'unknown',
+                name: it.product?.name ?? it.name ?? 'Produs',
+                price: Number(it.unit_price ?? it.price ?? it.product?.price ?? 0),
+              },
+              quantity: Number(it.quantity ?? 1),
+            }))
+            : [];
+
+        const subtotal = Number(o.subtotal ?? 0);
+        const discount = Number(o.discount ?? 0);
+        const deliveryFee = Number(o.delivery_fee ?? 0);
+        const total = Number(o.total ?? subtotal - discount + deliveryFee);
+
+        const normalized: ViewOrder = {
+          id: String(o.id ?? orderId),
+          createdAt: new Date(o.created_at ?? o.createdAt ?? Date.now()),
+          status: o.status ?? 'pending',
+          deliveryType: (o.delivery_type ?? o.deliveryType ?? 'delivery') as 'delivery' | 'pickup',
+          deliveryFee,
+          subtotal,
+          discount,
+          total,
+          paymentMethod: (o.payment_method ?? o.paymentMethod ?? 'cash') as 'cash' | 'card',
+          items,
+          customerInfo: {
+            name: o.customer_name ?? o.customer?.name ?? '',
+            phone: o.customer_phone ?? o.customer?.phone ?? '',
+            address:
+                o.address_text ??
+                o.shipping_address ??
+                (o.delivery_type === 'pickup' ? 'Ridicare din locație' : ''),
+            ...(o.notes ? { notes: o.notes } : {}),
+          },
+        };
+
+        setOrder(normalized);
+        return;
+      } catch (e) {
+        // ignorăm, trecem la fallback
+        console.warn('Falling back to local lastOrder', e);
       }
-    } catch (e) {
-      console.error('Failed to parse lastOrder from localStorage', e);
-    }
+
+      // 2) fallback din localStorage (setat în Checkout după plasare)
+      try {
+        const lastOrder = typeof window !== 'undefined' ? localStorage.getItem('lastOrder') : null;
+        if (!lastOrder) return;
+        const orderData = JSON.parse(lastOrder);
+        if (orderData?.id !== orderId) return;
+
+        const normalized: ViewOrder = {
+          id: String(orderData.id),
+          createdAt: new Date(orderData.createdAt),
+          status: 'pending',
+          deliveryType: orderData.deliveryType,
+          deliveryFee: Number(orderData.deliveryFee ?? 0),
+          subtotal: Number(orderData.subtotal ?? 0),
+          discount: Number(orderData.discount ?? 0),
+          total: Number(orderData.total ?? 0),
+          paymentMethod: orderData.paymentMethod,
+          items: orderData.items ?? [],
+          customerInfo: orderData.customerInfo ?? {
+            name: '',
+            phone: '',
+            address: '',
+          },
+        };
+        setOrder(normalized);
+      } catch (e) {
+        console.error('Failed to parse lastOrder from localStorage', e);
+      }
+    })();
   }, [orderId]);
 
   if (!order || !orderId) {
@@ -89,6 +170,8 @@ function CheckoutSuccessContent() {
         </>
     );
   }
+
+  const statusText = statusLabel[order.status || ''] ?? 'În așteptare';
 
   return (
       <>
@@ -120,7 +203,7 @@ function CheckoutSuccessContent() {
                       </p>
                     </div>
                     <Badge className="bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
-                      În așteptare
+                      {statusText}
                     </Badge>
                   </div>
 
@@ -230,7 +313,9 @@ function CheckoutSuccessContent() {
                     )}
                     <div className="flex justify-between">
                       <span>Livrare:</span>
-                      <span>{order.deliveryType === 'pickup' ? 'Gratuit' : formatPrice(10)}</span>
+                      <span>
+                      {order.deliveryType === 'pickup' ? 'Gratuit' : formatPrice(order.deliveryFee)}
+                    </span>
                     </div>
                     <div className="flex justify-between font-bold text-base pt-2 border-t border-border">
                       <span>Total:</span>
