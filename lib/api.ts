@@ -610,6 +610,7 @@ class ApiClient {
     async createStaff(payload: {
         name: string;
         email?: string | null;
+        password: string;
         phone?: string | null;
         role: 'MANAGER' | 'EMPLOYEE';
         pin: string; // 4+ cifre

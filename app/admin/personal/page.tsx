@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
     Search, UserPlus, Mail, Phone,
     ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
-    Shield, ShieldAlert, ShieldCheck,
+    Shield, ShieldAlert, ShieldCheck, EyeOff, Eye,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api';
@@ -26,6 +26,7 @@ type StaffUser = {
     id: number | string;
     name: string;
     email: string | null;
+    password: string | null;
     phone: string | null;
     role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
     created_at: string;
@@ -51,11 +52,12 @@ export default function AdminPersonalPage() {
     const [lastPage, setLastPage] = useState(1);
     const [total, setTotal] = useState(0);
     const PAGE_SIZE = 20;
+    const [showPassword, setShowPassword] = useState(false);
 
     const [createOpen, setCreateOpen] = useState(false);
     const [creating, setCreating] = useState(false);
-    const [form, setForm] = useState<{ name: string; email: string; phone: string; role: 'MANAGER' | 'EMPLOYEE'; pin: string }>({
-        name: '', email: '', phone: '', role: 'EMPLOYEE', pin: '',
+    const [form, setForm] = useState<{ name: string; email: string; password: string; phone: string; role: 'MANAGER' | 'EMPLOYEE'; pin: string }>({
+        name: '', email: '', password: '', phone: '', role: 'EMPLOYEE', pin: '',
     });
 
     // debounce
@@ -133,26 +135,27 @@ export default function AdminPersonalPage() {
     }, [canCreateManager, canCreateEmployee]);
 
     const generatePin = () => {
-        const p = Math.floor(1000 + Math.random() * 9000); // 4 digits
+        const p = Math.floor(100000 + Math.random() * 900000); // 6 digits
         setForm((f) => ({ ...f, pin: String(p) }));
     };
 
     const submitCreate = async () => {
         if (!form.name.trim()) return toast.error('Numele este obligatoriu');
-        if (!form.pin || form.pin.length < 4) return toast.error('PIN-ul trebuie să aibă cel puțin 4 cifre');
+        if (!form.pin || form.pin.length !== 6) return toast.error('PIN-ul trebuie să aibă 6 cifre');
 
         try {
             setCreating(true);
             await apiClient.createStaff({
                 name: form.name.trim(),
                 email: form.email.trim() || null,
+                password: form.password.trim(),
                 phone: form.phone.trim() || null,
                 role: form.role,
                 pin: form.pin.trim(),
             });
             toast.success('Utilizator creat');
             setCreateOpen(false);
-            setForm({ name: '', email: '', phone: '', role: 'EMPLOYEE', pin: '' });
+            setForm({ name: '', email: '', password: '', phone: '', role: 'EMPLOYEE', pin: '' });
             await loadStaff();
         } catch (e: any) {
             console.error(e);
@@ -309,6 +312,37 @@ export default function AdminPersonalPage() {
                             <Input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
                         </div>
                         <div className="space-y-1">
+                            <Label htmlFor="password">Parola</Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Introdu parola"
+                                    autoComplete="current-password"
+                                    className={`pr-10`}
+                                    value={form.password}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setForm((prev) => ({ ...prev, password: value }));
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                                    onClick={() => setShowPassword((s) => !s)}
+                                    aria-label={showPassword ? 'Ascunde parola' : 'Afișează parola'}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="space-y-1">
                             <Label>Telefon</Label>
                             <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
                         </div>
@@ -329,13 +363,13 @@ export default function AdminPersonalPage() {
                             </Select>
                         </div>
                         <div className="space-y-1">
-                            <Label>PIN (4+ cifre) *</Label>
+                            <Label>PIN (6 cifre) *</Label>
                             <div className="flex gap-2">
                                 <Input
                                     value={form.pin}
                                     onChange={(e) => setForm((f) => ({ ...f, pin: e.target.value.replace(/\D/g, '') }))}
                                     inputMode="numeric"
-                                    placeholder="ex: 1234"
+                                    placeholder="ex: 123456"
                                 />
                                 <Button type="button" variant="outline" onClick={generatePin}>Generează</Button>
                             </div>
