@@ -5,7 +5,15 @@ import { ThemeProvider } from '@/providers/theme-provider';
 import { Toaster } from 'sonner';
 import {AuthProvider} from "@/contexts/auth-context";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+  variable: "--font-inter",
+  adjustFontFallback: true,
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Arial", "sans-serif"],
+  weight: ["400", "500", "600", "700", "900"],
+})
 
 export const metadata: Metadata = {
   title: 'Sky Caffe | Bistro la înălțime în Năvodari',

@@ -187,6 +187,13 @@ class ApiClient {
         });
     }
 
+    async generateNutritionalValues(payload: any) {
+        return this.request<any>('/admin/products/generate-nutritional-values', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
     // ----------------
     // Categories
     // ----------------
@@ -259,7 +266,7 @@ class ApiClient {
         const qs = `?${new URLSearchParams({
             category_id: String(params.category_id),
         })}`;
-        return this.request<any>(`/admin/recommendations${qs}`);
+        return this.request<any>(`/recommendations${qs}`);
     }
 
     // POST /api/recommendations
@@ -299,7 +306,108 @@ class ApiClient {
         const qs = `?${new URLSearchParams({
             category_id: String(params.category_id),
         })}`;
-        return this.request<any>(`/admin/recommendations/active${qs}`);
+        return this.request<any>(`/recommendations/active${qs}`);
+    }
+
+    // ----------------
+    // Offers
+    // ----------------
+
+    // Public: active now (opțional paginat dacă trimiți pageSize)
+    async getOffers(params?: {
+        search?: string;
+        type?: 'PERCENT' | 'FIXED';
+        application_type?: 'cart' | 'category' | 'product_ids';
+        category_id?: string | number;
+        page?: number;
+        pageSize?: number;
+    }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/offers${qs}`);
+    }
+
+    // Admin list (paginat ca la products)
+    async getAdminOffers(params?: {
+        search?: string;
+        type?: 'PERCENT' | 'FIXED';
+        application_type?: 'cart' | 'category' | 'product_ids';
+        category_id?: string | number;
+        page?: number;
+        pageSize?: number;
+    }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/admin/offers${qs}`);
+    }
+
+    async createOffer(payload: {
+        code: string;
+        name: string;
+        description?: string;
+        type: 'PERCENT' | 'FIXED';
+        value: number;
+        application_type: 'cart' | 'category' | 'product_ids';
+        category_id?: number | string | null;
+        product_ids?: (number | string)[];
+        conditions?: { minItems?: number; minSubtotal?: number };
+        stackable?: boolean;
+        priority?: number;
+        active?: boolean;
+        starts_at?: string | null;
+        ends_at?: string | null;
+    }) {
+        return this.request<any>('/admin/offers', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async updateOffer(id: number | string, payload: Partial<{
+        code: string;
+        name: string;
+        description?: string;
+        type: 'PERCENT' | 'FIXED';
+        value: number;
+        application_type: 'cart' | 'category' | 'product_ids';
+        category_id?: number | string | null;
+        product_ids?: (number | string)[];
+        conditions?: { minItems?: number; minSubtotal?: number } | null;
+        stackable?: boolean;
+        priority?: number;
+        active?: boolean;
+        starts_at?: string | null;
+        ends_at?: string | null;
+    }>) {
+        return this.request<any>(`/admin/offers/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+    }
+
+    async deleteOffer(id: number | string) {
+        return this.request<any>(`/admin/offers/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async toggleOfferActive(id: number | string) {
+        return this.request<any>(`/admin/offers/${id}/toggle`, {
+            method: 'POST',
+        });
+    }
+
+    async reorderOffers(orders: { id: number | string; priority: number }[]) {
+        return this.request<any>('/admin/offers/reorder', {
+            method: 'POST',
+            body: JSON.stringify({ orders }),
+        });
+    }
+
+    // doar pentru application_type = product_ids
+    async syncOfferProducts(id: number | string, product_ids: (number | string)[]) {
+        return this.request<any>(`/admin/offers/${id}/products`, {
+            method: 'PUT',
+            body: JSON.stringify({ product_ids }),
+        });
     }
 }
 

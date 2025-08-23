@@ -53,7 +53,8 @@ function MenuPageContent() {
 
         setCategories(catRes.data);
 
-        const normalized = (prodRes.data || []).map((p: any) => ({
+        // Normalize: mark recommended from backend flag
+        const normalized: Product[] = (prodRes.data || []).map((p: any) => ({
           ...p,
           recommended: Boolean(p.is_recommended_now),
         }));
@@ -69,10 +70,11 @@ function MenuPageContent() {
     fetchAll();
   }, []);
 
-  // Normalize + resolve selected value (id or slug) to string id
+  // ----- Helpers -----
   const resolveCategoryId = useCallback(
       (value: string | null): string | null => {
         if (!value || value === 'all') return null;
+        if (value === 'recommended') return 'recommended';
         const match = categories.find(
             (c) => String(c.id) === String(value) || c.slug === value
         );
@@ -86,67 +88,90 @@ function MenuPageContent() {
       [resolveCategoryId, selectedCategory]
   );
 
-  const selectedCategoryName = useMemo(() => {
-    if (!selectedCategoryId) return 'Toate preparatele';
-    const cat = categories.find((c) => String(c.id) === selectedCategoryId);
-    return cat?.name ?? 'Categorie';
-  }, [selectedCategoryId, categories]);
-
   // Search set
   const searchIds = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    const query = searchQuery.trim().toLowerCase();
-    const matches = products.filter((p) => p.name.toLowerCase().includes(query));
+    if (!searchQuery.trim()) return null as Set<string> | null;
+    const q = searchQuery.trim().toLowerCase();
+    const matches = products.filter((p) => p.name.toLowerCase().includes(q));
     return new Set(matches.map((p) => p.id));
   }, [searchQuery, products]);
 
-  // Count products per category (global)
+  // Counts (global)
   const productCounts = useMemo(() => {
     const counts: Record<string, number> = { all: products.length };
+    let recommendedCount = 0;
     products.forEach((p) => {
       const key = String(p.category.id);
       counts[key] = (counts[key] || 0) + 1;
+      if (p.recommended) recommendedCount += 1;
     });
+    counts['recommended'] = recommendedCount;
     return counts;
   }, [products]);
 
-  // Only categories that have at least one product
+  // Actual categories that have products (global)
   const categoriesWithProducts = useMemo(
       () => categories.filter((c) => (productCounts[String(c.id)] ?? 0) > 0),
       [categories, productCounts]
   );
 
-  // Active category id for UI (ensure it's one of the filtered categories)
-  const activeCategoryIdForUI = useMemo(() => {
-    const resolved = selectedCategoryId;
-    if (resolved && categoriesWithProducts.some((c) => String(c.id) === resolved)) {
-      return resolved;
-    }
-    // fallback to first available filtered category (prevents "no active" on desktop chips)
-    return categoriesWithProducts.length ? String(categoriesWithProducts[0].id) : '';
-  }, [selectedCategoryId, categoriesWithProducts]);
+  // Build groups (including pseudo "Recomandate" first)
+  type GroupCat = { id: string; name: string; icon?: string };
+  const recommendedCount = productCounts.recommended ?? 0;
+  const recommendedCat = useMemo<GroupCat | null>(() => {
+    return recommendedCount > 0
+        ? { id: 'recommended', name: 'Recomandate', icon: 'star' }
+        : null;
+  }, [recommendedCount]);
 
-  // Group products by filtered categories
   const grouped = useMemo(() => {
-    return categoriesWithProducts.map((cat) => {
+    const groups: { cat: GroupCat; items: Product[] }[] = [];
+
+    // Pseudo "Recomandate" group first (only if we have any recommended)
+    if (recommendedCat) {
+      const recItems = products.filter(
+          (p) => p.recommended && (!searchIds || searchIds.has(p.id))
+      );
+      groups.push({ cat: recommendedCat, items: recItems });
+    }
+
+    // Then real categories
+    categoriesWithProducts.forEach((c) => {
       const items = products.filter(
           (p) =>
-              String(p.category.id) === String(cat.id) &&
+              String(p.category.id) === String(c.id) &&
               (!searchIds || searchIds.has(p.id))
       );
-      return { cat, items };
+      groups.push({
+        cat: { id: String(c.id), name: c.name, icon: (c as any).icon },
+        items,
+      });
     });
-  }, [categoriesWithProducts, products, searchIds]);
+
+    return groups;
+  }, [recommendedCat, products, categoriesWithProducts, searchIds]);
+
+  // Only visible (when searching, hide groups without results)
+  const visibleGroups = useMemo(() => {
+    if (!searchQuery.trim()) return grouped;
+    return grouped.filter((g) => g.items.length > 0);
+  }, [grouped, searchQuery]);
+
+  // Active category id for UI: keep current if still visible; else fallback to first visible
+  const activeCategoryIdForUI = useMemo(() => {
+    const ids = visibleGroups.map((g) => g.cat.id);
+    const resolved = selectedCategoryId ?? (ids.length ? ids[0] : '');
+    if (resolved && ids.includes(resolved)) return resolved;
+    return ids.length ? ids[0] : '';
+  }, [visibleGroups, selectedCategoryId]);
 
   const clearSearch = () => setSearchQuery('');
 
-  // Mobile chips (filtered)
-  const categoryChips = useMemo(() => {
-    return categoriesWithProducts.map((c) => ({
-      id: String(c.id),
-      name: c.name,
-    }));
-  }, [categoriesWithProducts]);
+  // Chips based on visible groups (follow filtered)
+  const categoryChips = useMemo(
+      () => visibleGroups.map((g) => ({ id: g.cat.id, name: g.cat.name })),
+      [visibleGroups]
+  );
 
   const chipsContainerRef = useRef<HTMLDivElement | null>(null);
   const programmaticScrollRef = useRef(false);
@@ -161,7 +186,6 @@ function MenuPageContent() {
         if (programmaticTimerRef.current) {
           window.clearTimeout(programmaticTimerRef.current);
         }
-
         programmaticTimerRef.current = window.setTimeout(() => {
           programmaticScrollRef.current = false;
         }, 500);
@@ -175,13 +199,12 @@ function MenuPageContent() {
   );
 
   const handleSelectCategory = (value: string) => {
-    // value can be id (string) or slug depending on source; keep raw in state
     setSelectedCategory(value);
     const id = resolveCategoryId(value) ?? (value === 'all' ? null : value);
     if (id) scrollToCategory(id);
   };
 
-  // Ensure selectedCategory reflects param once categories are loaded
+  // Ensure selectedCategory reflects query param once categories are loaded
   useEffect(() => {
     if (categories.length === 0) return;
     const resolvedId = resolveCategoryId(initialCategoryParam);
@@ -190,7 +213,7 @@ function MenuPageContent() {
     }
   }, [categories, initialCategoryParam, resolveCategoryId]);
 
-  // Sync active chip while scrolling (DOM order, filtered sections only)
+  // Sync active chip while scrolling (DOM order of visible sections)
   useEffect(() => {
     const sections = Array.from(
         document.querySelectorAll('section[id^="cat-"]')
@@ -213,10 +236,8 @@ function MenuPageContent() {
         }
       });
 
-      // Only update if the resolved id differs from what the scroll indicates
       if (activeId && resolveCategoryId(selectedCategory) !== activeId) {
         setSelectedCategory(activeId);
-
         const chipEl = chipsContainerRef.current?.querySelector<HTMLButtonElement>(
             `[data-cat="${activeId}"]`
         );
@@ -233,7 +254,7 @@ function MenuPageContent() {
     onScroll(); // initial
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [STICKY_OFFSET, selectedCategory, resolveCategoryId]);
+  }, [STICKY_OFFSET, selectedCategory, resolveCategoryId, visibleGroups]);
 
   if (loading) {
     return (
@@ -286,25 +307,23 @@ function MenuPageContent() {
                     </div>
                   </div>
 
-                  {/* FOLLOW FILTERED CATEGORIES ON DESKTOP */}
+                  {/* Desktop category list follows visible groups (incl. Recomandate) */}
                   <CategoryFilter
                       selectedCategory={activeCategoryIdForUI}
                       onCategoryChange={handleSelectCategory}
                       productCounts={productCounts}
-                      categories={[
-                        ...categoriesWithProducts.map((c) => ({
-                          id: String(c.id),
-                          name: c.name,
-                          icon: (c as any).icon,
-                        })),
-                      ]}
+                      categories={visibleGroups.map((g) => ({
+                        id: g.cat.id,
+                        name: g.cat.name,
+                        icon: g.cat.id === 'recommended' ? 'star' : (g.cat as any).icon,
+                      }))}
                   />
                 </div>
               </aside>
 
               {/* Main */}
               <main className="flex-1">
-                {/* Mobile category chips (FILTERED) */}
+                {/* Mobile category chips (visible groups incl. Recomandate) */}
                 <div className="lg:hidden sticky-under-header -mx-4 px-4 mb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                   <div
                       ref={chipsContainerRef}
@@ -342,10 +361,9 @@ function MenuPageContent() {
                   </div>
                 </div>
 
-                {/* Lista de produse (doar secțiuni cu produse) */}
+                {/* Sections (Recomandate first if present) */}
                 <div className="space-y-10">
                   {grouped.map(({ cat, items }) => {
-                    // dacă căutarea e activă și nu sunt rezultate -> nu afișăm secțiunea
                     if (searchQuery.trim() && items.length === 0) return null;
 
                     return (
@@ -369,7 +387,7 @@ function MenuPageContent() {
                                     <ProductCard
                                         key={product.id}
                                         product={product}
-                                        showCategory={false}
+                                        showCategory={cat.id !== 'recommended'} // hide category label in Recomandate
                                         className="animate-fade-in"
                                     />
                                 ))}
@@ -379,7 +397,7 @@ function MenuPageContent() {
                     );
                   })}
 
-                  {searchQuery.trim() && grouped.every((g) => g.items.length === 0) && (
+                  {searchQuery.trim() && visibleGroups.every((g) => g.items.length === 0) && (
                       <div className="text-center py-12">
                         <div className="text-6xl mb-4">🔍</div>
                         <h3 className="text-xl font-semibold mb-2">Nu am găsit preparate</h3>

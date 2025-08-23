@@ -27,20 +27,75 @@ import {
 } from '@/components/ui/select';
 
 import Image from 'next/image';
-import { Product, Category } from '@/types';
+import {Product, Category, EU_ALLERGENS} from '@/types';
 import apiClient from '@/lib/api';
 
+// Simple toggle chip buttons for allergens
+function AllergensButtons({
+                            value,
+                            onChange,
+                          }: {
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const toggle = (id: string) => {
+    if (value.includes(id)) {
+      onChange(value.filter(v => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  };
+
+  return (
+      <div className="flex flex-wrap gap-2">
+        {EU_ALLERGENS.map(a => {
+          const active = value.includes(a.id);
+          return (
+              <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => toggle(a.id)}
+                  className={[
+                    'px-3 py-1.5 rounded-md text-sm border transition-colors',
+                    active
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-foreground border-input hover:bg-muted',
+                  ].join(' ')}
+              >
+                {a.label}
+              </button>
+          );
+        })}
+      </div>
+  );
+}
+
+// ------------------------------
+// Tags type
+// ------------------------------
 type Tag = { id: number; name: string };
 
+// ------------------------------
+// Form Data type (includes inventory & allergens)
+// ------------------------------
 interface FormData {
   name: string;
   description: string;
   price: number;
   image: string;
-  category: string;   // Select holds id as string
-  tags: number[];     // Tag IDs
-  recommended: boolean;
+  category: string;   // category id as string
+  tags: number[];     // tag IDs
   available: boolean;
+
+  // Inventory
+  in_stock: boolean;
+  stock_type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'PERMANENT';
+  stock_quantity: number;
+  nutritional_values: string;
+  ingredients?: string;
+
+  // Allergens array (string keys from EU_ALLERGENS)
+  allergens: string[];
 }
 
 interface ProductFormProps {
@@ -50,14 +105,14 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
-  // Known tags catalog (from server or learned as we create them)
+  // Known tags (from API) - local cache
   const [allTags, setAllTags] = useState<Tag[]>(
-      product?.tags?.map(t => ({ id: Number(t.id), name: t.name })) || []
+      product?.tags?.map(t => ({ id: Number((t as any).id), name: (t as any).name })) || []
   );
 
-  // Selected tags as IDs
+  // Selected tag IDs
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
-      product?.tags?.map(t => Number(t.id)) || []
+      product?.tags?.map(t => Number((t as any).id)) || []
   );
 
   const [newTag, setNewTag] = useState('');
@@ -82,23 +137,41 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
       description: product?.description || '',
       price: product?.price || 0,
       image: product?.image || '',
-      category: product?.category?.id?.toString() || '',
-      tags: product?.tags?.map(t => Number(t.id)) || [],
-      recommended: product?.recommended ?? false,
+      category: (product as any)?.category?.id ? String((product as any).category?.id) : '',
+      tags: product?.tags?.map(t => Number((t as any).id)) || [],
       available: product?.available ?? true,
+
+      // Inventory (with safe fallbacks)
+      in_stock: (product as any)?.in_stock ?? true,
+      stock_type: (product as any)?.stock_type ?? 'PERMANENT',
+      stock_quantity: (product as any)?.stock_quantity ?? 0,
+      nutritional_values: (product as any)?.nutritional_values ?? '',
+      ingredients: (product as any)?.ingredients ?? '',
+
+      // Allergens array
+      allergens: Array.isArray((product as any)?.allergens)
+          ? (product as any).allergens
+          : [],
     },
   });
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = form;
+
   const imageFromInput = watch('image');
   const imagePreview = previewUrl || imageFromInput || product?.image || '';
+
+  // Watchers for inventory & allergens
+  const inStock = watch('in_stock');
+  const stockType = watch('stock_type');
+  const stockQuantity = watch('stock_quantity');
+  const allergens = watch('allergens') || [];
 
   // ---------- API data ----------
   // Load categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await apiClient.getCategories(); // should return { data: Category[] } or plain array
+        const res = await apiClient.getCategories();
         setCategories(res.data ?? res ?? []);
       } catch {
         toast.error('Eroare la încărcarea categoriilor');
@@ -107,45 +180,43 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
     fetchCategories();
   }, []);
 
-  // Load all tags (if endpoint exists)
+  // Load tags if endpoint exists
   useEffect(() => {
     const fetchTags = async () => {
       if (typeof (apiClient as any).getProductTags !== 'function') return;
       try {
-        const res = await (apiClient as any).getProductTags(); // expect { data: Tag[] } or Tag[]
+        const res = await (apiClient as any).getProductTags();
         const list: Tag[] = (res?.data ?? res ?? []).map((t: any) => ({
           id: Number(t.id),
           name: String(t.name),
         }));
-
-        // Merge with any tags coming from prefilled product to ensure names available
         const byId = new Map<number, Tag>();
-        [...list, ...allTags].forEach(t => byId.set(Number(t.id), { id: Number(t.id), name: t.name }));
+        [...list, ...allTags].forEach(t => byId.set(t.id, { id: t.id, name: t.name }));
         setAllTags(Array.from(byId.values()));
       } catch {
-        // silent fail; we can still create tags on the fly
+        // ignore
       }
     };
     fetchTags();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep RHF 'tags' in sync with our selected IDs
+  // Keep RHF 'tags' in sync with selectedTagIds
   useEffect(() => {
     setValue('tags', selectedTagIds);
   }, [selectedTagIds, setValue]);
 
-  // Fix: set category after categories are loaded
+  // Ensure existing category is set after categories load
   useEffect(() => {
-    if (product?.category?.id && categories.length > 0) {
-      const exists = categories.some(c => String(c.id) === String(product.category.id));
-      if (exists) {
-        setValue('category', String(product.category.id));
+    if ((product as any)?.category?.id && categories.length > 0) {
+      const id = String((product as any).category.id);
+      if (categories.some(c => String(c.id) === id)) {
+        setValue('category', id);
       }
     }
-  }, [product?.category?.id, categories, setValue]);
+  }, [categories, product, setValue]);
 
-  // ---------- Crop handlers ----------
+  // ---------- Image crop handlers ----------
   const readFile = (file: File): Promise<string | ArrayBuffer | null> =>
       new Promise((resolve) => {
         const reader = new FileReader();
@@ -259,6 +330,10 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         return;
       }
 
+      // If not in stock, force quantity 0 (backend can also ignore)
+      const normalizedQuantity = data.in_stock ? Number(data.stock_quantity || 0) : 0;
+      const normalizedStockType = data.in_stock ? data.stock_type : 'PERMANENT';
+
       const payload = {
         name: data.name,
         description: data.description,
@@ -266,14 +341,22 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         image: imageUrl,
         category_id: parseInt(data.category, 10),
         tags: selectedTagIds,
-        recommended: data.recommended,
         available: data.available ?? true,
+
+        // Inventory
+        in_stock: !!data.in_stock,
+        stock_type: normalizedStockType,
+        stock_quantity: normalizedQuantity,
+        nutritional_values: (data.nutritional_values || '').trim(),
+
+        // Allergens
+        allergens: data.allergens || [],
       };
 
       let saved: Product;
 
       if (product) {
-        saved = await apiClient.updateProduct(product.id, payload);
+        saved = await apiClient.updateProduct((product as any).id, payload);
         toast.success('Produs actualizat cu succes');
       } else {
         saved = await apiClient.createProduct(payload);
@@ -289,10 +372,34 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
     }
   };
 
-  // Helpers to render selected tag names (IDs -> names)
+  // Helpers to render selected tag names
   const selectedTagsWithNames: Tag[] = selectedTagIds
       .map(id => allTags.find(t => t.id === id))
       .filter(Boolean) as Tag[];
+
+  const generateNutritionalValues = async () => {
+    const ingredients = watch('ingredients') || '';
+    const productName = watch('name') || '';
+
+    if (!productName.trim()) {
+      toast.error('Adaugă mai întâi numele produsului pentru a genera valorile nutriționale.');
+      return;
+    }
+
+    if (!ingredients.trim()) {
+      toast.error('Adaugă mai întâi ingredientele pentru a genera valorile nutriționale.');
+      return;
+    }
+
+    const payload = {
+        name: productName,
+        ingredients: ingredients,
+    };
+
+    const response = await apiClient.generateNutritionalValues(payload);
+    setValue('nutritional_values', response.nutritional_values, { shouldDirty: true });
+    toast.success('Valorile nutriționale au fost generate.');
+  }
 
   return (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -334,16 +441,31 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
           {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
         </div>
 
+        {/* === Ingredients === */}
+        <div>
+          <Label htmlFor="ingredients">Ingrediente *</Label>
+          <Textarea
+              id="ingredients"
+                placeholder="Ex: apă, făină, drojdie, sare, ulei de măsline, sos de roșii, mozzarella, busuioc"
+              rows={3}
+              {...register('ingredients', {
+                required: 'Ingredientele sunt obligatorii',
+                minLength: { value: 10, message: 'Minim 10 caractere' },
+              })}
+          />
+          {errors.ingredients && <p className="text-sm text-destructive">{errors.ingredients.message}</p>}
+        </div>
+
         {/* === Image Preview & Upload === */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Previzualizare imagine</Label>
             {imagePreview ? (
-                <div className="relative w-full aspect-[4/3] overflow-hidden border">
+                <div className="relative w-full aspect-[4/3] overflow-hidden border rounded-md">
                   <Image src={imagePreview} alt="preview" fill className="object-cover" />
                 </div>
             ) : (
-                <div className="aspect-[4/3] border flex items-center justify-center text-muted-foreground">
+                <div className="aspect-[4/3] border rounded-md flex items-center justify-center text-muted-foreground">
                   Fără imagine
                 </div>
             )}
@@ -354,7 +476,13 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
               <Upload className="w-4 h-4 mr-2" />
               Încarcă imagine
             </Button>
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileChange}
+            />
           </div>
         </div>
 
@@ -377,8 +505,12 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
               )}
             </div>
             <div className="flex gap-2 pt-3">
-              <Button variant="outline" className="flex-1" onClick={() => setShowCrop(false)}>Anulează</Button>
-              <Button className="flex-1" onClick={handleConfirmCrop}>Confirmă</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setShowCrop(false)}>
+                Anulează
+              </Button>
+              <Button className="flex-1" onClick={handleConfirmCrop}>
+                Confirmă
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -470,16 +602,85 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
           </div>
         </div>
 
+        {/* === Inventory === */}
+        <div className="space-y-4">
+          <Label>Stoc & valori nutriționale</Label>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+                id="in_stock"
+                checked={inStock}
+                onCheckedChange={(checked: any) => setValue('in_stock', !!checked)}
+            />
+            <Label htmlFor="in_stock">În stoc</Label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={inStock ? '' : 'opacity-50 pointer-events-none'}>
+              <Label htmlFor="stock_type">Tip stoc</Label>
+              <Select
+                  value={stockType}
+                  onValueChange={(val: any) => setValue('stock_type', val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Alege tipul de stoc" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DAILY">Zilnic</SelectItem>
+                  <SelectItem value="WEEKLY">Săptămânal</SelectItem>
+                  <SelectItem value="MONTHLY">Lunar</SelectItem>
+                  <SelectItem value="PERMANENT">Totala</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className={inStock ? '' : 'opacity-50 pointer-events-none'}>
+              <Label htmlFor="stock_quantity">Cantitate</Label>
+              <Input
+                  id="stock_quantity"
+                  type="number"
+                  min={0}
+                  value={stockQuantity}
+                  onChange={(e) => setValue('stock_quantity', Number(e.target.value) || 0)}
+              />
+            </div>
+
+            <div className="md:col-span-1"></div>
+          </div>
+
+          <div>
+            <Label htmlFor="nutritional_values">Valori nutriționale</Label>
+            <Button type="button" variant="outline" size="sm" className="ms-2 mt-1 mb-2" onClick={() => generateNutritionalValues()}>Genereaza valorile nutritionale</Button>
+            <Textarea
+                id="nutritional_values"
+                rows={3}
+                placeholder="Ex: 100g: 250 kcal | grăsimi 10g (din care saturate 3g) | carbohidrați 30g | proteine 8g | sare 0.9g"
+                {...register('nutritional_values')}
+            />
+          </div>
+        </div>
+
+        {/* === Allergens (EU) === */}
+        <div className="space-y-2">
+          <Label>Alergeni (UE)</Label>
+          <AllergensButtons
+              value={allergens}
+              onChange={(next) => setValue('allergens', next, { shouldDirty: true })}
+          />
+          {allergens.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {EU_ALLERGENS.filter(a => allergens.includes(a.id)).map(a => (
+                    <Badge key={a.id} variant="secondary">{a.label}</Badge>
+                ))}
+              </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Selectează alergenii prezenți în produs. (Nu se pot adăuga alții noi.)
+          </p>
+        </div>
+
         {/* === Checkboxes === */}
         <div className="flex gap-6">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-                id="recommended"
-                checked={watch('recommended')}
-                onCheckedChange={(checked: any) => setValue('recommended', !!checked)}
-            />
-            <Label htmlFor="recommended">Recomandat</Label>
-          </div>
           <div className="flex items-center space-x-2">
             <Checkbox
                 id="available"

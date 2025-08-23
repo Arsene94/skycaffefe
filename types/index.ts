@@ -9,6 +9,14 @@ export interface Product {
   tags: Tags[];
   recommended: boolean;
   available: boolean;
+  nutritional_values: string;
+  ingredients: string;
+  allergens: string[];
+  weight: number;
+  stock_quantity: number;
+  stock_type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'PERMANENT';
+  in_stock: boolean;
+  active_recommendation: boolean | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -77,3 +85,20 @@ export interface AdminStats {
   popularProducts: { product: Product; orders: number }[];
   recentOrders: Order[];
 }
+
+export const EU_ALLERGENS = [
+  { id: 'gluten',      label: 'Cereale cu gluten (grâu, secară, orz, ovăz, speltă)' },
+  { id: 'crustaceans', label: 'Crustacee' },
+  { id: 'eggs',        label: 'Ouă' },
+  { id: 'fish',        label: 'Pește' },
+  { id: 'peanuts',     label: 'Arahide' },
+  { id: 'soybeans',    label: 'Soia' },
+  { id: 'milk',        label: 'Lapte' },
+  { id: 'nuts',        label: 'Fructe cu coajă (migdale, alune, nuci, fistic etc.)' },
+  { id: 'celery',      label: 'Țelină' },
+  { id: 'mustard',     label: 'Muștar' },
+  { id: 'sesame',      label: 'Susan' },
+  { id: 'sulphites',   label: 'Dioxid de sulf și sulfiți' },
+  { id: 'lupin',       label: 'Lupin' },
+  { id: 'molluscs',    label: 'Moluște' },
+];

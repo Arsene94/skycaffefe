@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,100 +13,71 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, X } from 'lucide-react';
-import { categories } from '@/data/categories';
-import {Offer, Product} from '@/types';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
-import apiClient from "@/lib/api";
+import apiClient from '@/lib/api';
+import type { Offer, Product, Category } from '@/types';
 
 const offerSchema = z.object({
-  name: z.string()
-      .min(2, 'Numele trebuie să aibă cel puțin 2 caractere')
-      .max(100, 'Numele este prea lung'),
-
-  description: z.string()
-      .min(10, 'Descrierea trebuie să aibă cel puțin 10 caractere')
-      .max(500, 'Descrierea este prea lungă'),
-
+  name: z.string().min(2, 'Numele trebuie să aibă cel puțin 2 caractere').max(100, 'Numele este prea lung'),
+  description: z.string().min(10, 'Descrierea trebuie să aibă cel puțin 10 caractere').max(500, 'Descrierea este prea lungă'),
   type: z.union([z.literal('PERCENT'), z.literal('FIXED')]),
-
-  value: z.number()
-      .min(0.01, 'Valoarea trebuie să fie pozitivă')
-      .max(1000, 'Valoarea este prea mare'),
-
+  value: z.number().min(0.01, 'Valoarea trebuie să fie pozitivă').max(1000, 'Valoarea este prea mare'),
   applicationType: z.union([z.literal('cart'), z.literal('category'), z.literal('productIds')]),
-
   categoryId: z.string().optional(),
   productIds: z.array(z.string()).optional(),
-
   minItems: z.number().min(0).optional().nullable(),
   minSubtotal: z.number().min(0).optional().nullable(),
-
   stackable: z.boolean(),
   priority: z.number().min(1, 'Prioritatea trebuie să fie cel puțin 1').max(100, 'Prioritatea nu poate fi mai mare de 100'),
   active: z.boolean(),
 }).superRefine((data, ctx) => {
-  // Validate percentage values
   if (data.type === 'PERCENT' && data.value > 100) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Procentul nu poate fi mai mare de 100%',
-      path: ['value'],
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Procentul nu poate fi mai mare de 100%', path: ['value'] });
   }
-
-  // Validate application type requirements
   if (data.applicationType === 'category' && !data.categoryId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Trebuie să selectați o categorie',
-      path: ['categoryId'],
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Trebuie să selectați o categorie', path: ['categoryId'] });
   }
-
   if (data.applicationType === 'productIds' && (!data.productIds || data.productIds.length === 0)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Trebuie să selectați cel puțin un produs',
-      path: ['productIds'],
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Trebuie să selectați cel puțin un produs', path: ['productIds'] });
   }
 });
 
-type OfferFormData = {
-  name: string;
-  description: string;
-  type: 'PERCENT' | 'FIXED';
-  value: number;
-  applicationType: 'cart' | 'category' | 'productIds';
-  categoryId?: string;
-  productIds?: string[];
-  minItems?: number | null;
-  minSubtotal?: number | null;
-  stackable: boolean;
-  priority: number;
-  active: boolean;
-};
+type OfferFormData = z.infer<typeof offerSchema>;
 
 interface OfferFormProps {
-  offer?: Offer;
+  offer?: Offer | (Offer & { numericId?: number }); // acceptăm numericId de la admin list
   onClose: () => void;
-  onSave?: (offer: Partial<Offer>) => Promise<void>;
+  onSave?: (offer: Partial<Offer>) => Promise<void>; // dacă e prezent, îl folosim; altfel apelăm API direct
+}
+
+function slugify(input: string) {
+  return input
+      .toLowerCase()
+      .trim()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
 }
 
 export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
   const [selectedProducts, setSelectedProducts] = useState<string[]>(offer?.productIds || []);
   const [startDate, setStartDate] = useState<Date | undefined>(
-      offer?.conditions?.startDate ? new Date(offer.conditions.startDate) : undefined
+      // suportăm atât startsAt/endsAt (din API), cât și conditions.startDate/endDate (din mock)
+      (offer as any)?.startsAt ? new Date((offer as any).startsAt) :
+          offer?.conditions?.startDate ? new Date(offer.conditions.startDate) : undefined
   );
   const [endDate, setEndDate] = useState<Date | undefined>(
-      offer?.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined
+      (offer as any)?.endsAt ? new Date((offer as any).endsAt) :
+          offer?.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [ products, setProducts ] = useState<Product[]>();
+
+  const [products, setProducts] = useState<Product[]>();
+  const [categories, setCategories] = useState<Category[]>();
 
   const form = useForm<OfferFormData>({
     resolver: zodResolver(offerSchema),
@@ -115,11 +86,11 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       description: offer?.description || '',
       type: offer?.type || 'PERCENT',
       value: offer?.value || 0,
-      applicationType: offer?.applicationType || 'cart',
-      categoryId: offer?.categoryId || '',
+      applicationType: (offer?.applicationType as any) || 'cart',
+      categoryId: (offer?.categoryId as any) || '',
       productIds: offer?.productIds || [],
-      minItems: offer?.conditions?.minItems || null,
-      minSubtotal: offer?.conditions?.minSubtotal || null,
+      minItems: (offer as any)?.minItems ?? offer?.conditions?.minItems ?? null,
+      minSubtotal: (offer as any)?.minSubtotal ?? offer?.conditions?.minSubtotal ?? null,
       stackable: offer?.stackable || false,
       priority: offer?.priority || 1,
       active: offer?.active ?? true,
@@ -131,6 +102,23 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
   const applicationType = watch('applicationType');
   const offerType = watch('type');
 
+  useEffect(() => {
+    // data live
+    (async () => {
+      try {
+        const [prodRes, catRes] = await Promise.all([
+          apiClient.getProducts({ page: 1, pageSize: 1000 }),
+          apiClient.getCategories({ page: 1, pageSize: 1000 }),
+        ]);
+        setProducts(prodRes?.data ?? []);
+        setCategories(catRes?.data ?? []);
+      } catch (e) {
+        console.error(e);
+        toast.error('Eroare la încărcarea produselor/categoriilor');
+      }
+    })();
+  }, []);
+
   // Update form when offer prop changes
   useEffect(() => {
     if (offer) {
@@ -139,35 +127,24 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
         description: offer.description || '',
         type: offer.type || 'PERCENT',
         value: offer.value || 0,
-        applicationType: offer.applicationType || 'cart',
-        categoryId: offer.categoryId || '',
+        applicationType: (offer.applicationType as any) || 'cart',
+        categoryId: (offer.categoryId as any) || '',
         productIds: offer.productIds || [],
-        minItems: offer.conditions?.minItems || null,
-        minSubtotal: offer.conditions?.minSubtotal || null,
+        minItems: (offer as any)?.minItems ?? offer?.conditions?.minItems ?? null,
+        minSubtotal: (offer as any)?.minSubtotal ?? offer?.conditions?.minSubtotal ?? null,
         stackable: offer.stackable || false,
         priority: offer.priority || 1,
         active: offer.active ?? true,
       });
       setSelectedProducts(offer.productIds || []);
-      setStartDate(offer.conditions?.startDate ? new Date(offer.conditions.startDate) : undefined);
-      setEndDate(offer.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined);
+      setStartDate((offer as any)?.startsAt ? new Date((offer as any).startsAt) :
+          offer?.conditions?.startDate ? new Date(offer.conditions.startDate) : undefined);
+      setEndDate((offer as any)?.endsAt ? new Date((offer as any).endsAt) :
+          offer?.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined);
     }
   }, [offer, reset]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await apiClient.getProducts({ page: 1, pageSize: 1000 });
-        setProducts(response.data);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    }
-
-    fetchProducts();
-  }, []);
-
-  // Clear category/product selection when application type changes
+  // Clear dependent fields on application type change
   useEffect(() => {
     if (applicationType === 'cart') {
       setValue('categoryId', '');
@@ -189,8 +166,8 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
     }
   }, [startDate, endDate]);
 
-  if (!products) {
-    return <div>Se încarcă produsele...</div>;
+  if (!products || !categories) {
+    return <div>Se încarcă...</div>;
   }
 
   const addProduct = (productId: string) => {
@@ -198,7 +175,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       const updatedProducts = [...selectedProducts, productId];
       setSelectedProducts(updatedProducts);
       setValue('productIds', updatedProducts);
-      trigger('productIds'); // Trigger validation
+      trigger('productIds');
     }
   };
 
@@ -206,46 +183,57 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
     const updatedProducts = selectedProducts.filter(id => id !== productId);
     setSelectedProducts(updatedProducts);
     setValue('productIds', updatedProducts);
-    trigger('productIds'); // Trigger validation
+    trigger('productIds');
   };
 
   const onSubmit = async (data: OfferFormData) => {
-    // Additional validation for date range
     if (startDate && endDate && startDate > endDate) {
       toast.error('Data de început nu poate fi după data de sfârșit');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      const offerData: Partial<Offer> = {
-        ...data,
-        conditions: {
-          minItems: data.minItems || undefined,
-          minSubtotal: data.minSubtotal || undefined,
-          startDate,
-          endDate,
-        },
-        id: offer?.id, // Preserve existing ID if updating
+      // map UI -> API payload
+      const payload: any = {
+        // dacă edităm și avem code, îl păstrăm; altfel generăm unul din name
+        code: (offer as any)?.code || slugify(data.name),
+        name: data.name,
+        description: data.description,
+        type: data.type, // 'PERCENT' | 'FIXED'
+        value: data.value,
+        application_type:
+            data.applicationType === 'productIds' ? 'product_ids' : data.applicationType, // API enum
+        category_id:
+            data.applicationType === 'category' && data.categoryId ? Number(data.categoryId) : null,
+        product_ids:
+            data.applicationType === 'productIds' ? (data.productIds || []).map(id => Number(id)) : [],
+        min_items: data.minItems ?? null,
+        min_subtotal: data.minSubtotal ?? null,
+        stackable: data.stackable,
+        priority: data.priority,
+        active: data.active,
+        starts_at: startDate ? startDate.toISOString() : null,
+        ends_at: endDate ? endDate.toISOString() : null,
       };
 
       if (onSave) {
-        await onSave(offerData);
+        await onSave(payload);
       } else {
-        // Simulate API call if no onSave provided
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('Offer data:', offerData);
+        // apelăm direct API
+        const numericId = (offer as any)?.numericId ?? (offer as any)?.id; // fallback
+        if (offer && numericId) {
+          await apiClient.updateOffer(numericId, payload);
+        } else {
+          await apiClient.createOffer(payload);
+        }
       }
 
-      toast.success(
-          offer ? 'Ofertă actualizată cu succes' : 'Ofertă adăugată cu succes'
-      );
-
+      toast.success(offer ? 'Ofertă actualizată cu succes' : 'Ofertă adăugată cu succes');
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving offer:', error);
-      toast.error('Eroare la salvarea ofertei');
+      toast.error(error?.message || 'Eroare la salvarea ofertei');
     } finally {
       setIsSubmitting(false);
     }
@@ -267,9 +255,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                   {...register('name')}
                   className={errors.name ? 'border-destructive' : ''}
               />
-              {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -281,9 +267,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                   {...register('description')}
                   className={errors.description ? 'border-destructive' : ''}
               />
-              {errors.description && (
-                  <p className="text-sm text-destructive">{errors.description.message}</p>
-              )}
+              {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
             </div>
           </CardContent>
         </Card>
@@ -301,7 +285,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                     value={watch('type')}
                     onValueChange={(value) => {
                       setValue('type', value as 'PERCENT' | 'FIXED');
-                      trigger('value'); // Re-validate value when type changes
+                      trigger('value');
                     }}
                 >
                   <SelectTrigger className={errors.type ? 'border-destructive' : ''}>
@@ -312,15 +296,11 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                     <SelectItem value="FIXED">Sumă fixă (lei)</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.type && (
-                    <p className="text-sm text-destructive">{errors.type.message}</p>
-                )}
+                {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="value">
-                  Valoare * {offerType === 'PERCENT' ? '(%)' : '(lei)'}
-                </Label>
+                <Label htmlFor="value">Valoare * {offerType === 'PERCENT' ? '(%)' : '(lei)'}</Label>
                 <Input
                     id="value"
                     type="number"
@@ -328,15 +308,10 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                     min="0.01"
                     max={offerType === 'PERCENT' ? '100' : '1000'}
                     placeholder={offerType === 'PERCENT' ? 'ex: 20' : 'ex: 50.00'}
-                    {...register('value', {
-                      valueAsNumber: true,
-                      onChange: () => trigger('value') // Trigger validation on change
-                    })}
+                    {...register('value', { valueAsNumber: true, onChange: () => trigger('value') })}
                     className={errors.value ? 'border-destructive' : ''}
                 />
-                {errors.value && (
-                    <p className="text-sm text-destructive">{errors.value.message}</p>
-                )}
+                {errors.value && <p className="text-sm text-destructive">{errors.value.message}</p>}
               </div>
             </div>
 
@@ -352,12 +327,8 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                     {...register('priority', { valueAsNumber: true })}
                     className={errors.priority ? 'border-destructive' : ''}
                 />
-                <p className="text-xs text-muted-foreground">
-                  1 = prioritate maximă, 100 = prioritate minimă
-                </p>
-                {errors.priority && (
-                    <p className="text-sm text-destructive">{errors.priority.message}</p>
-                )}
+                <p className="text-xs text-muted-foreground">1 = prioritate maximă, 100 = prioritate minimă</p>
+                {errors.priority && <p className="text-sm text-destructive">{errors.priority.message}</p>}
               </div>
 
               <div className="space-y-4">
@@ -369,9 +340,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                   />
                   <Label htmlFor="stackable">Stackable</Label>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Poate fi combinată cu alte oferte
-                </p>
+                <p className="text-xs text-muted-foreground">Poate fi combinată cu alte oferte</p>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -410,9 +379,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                   <SelectItem value="productIds">Produse specifice</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.applicationType && (
-                  <p className="text-sm text-destructive">{errors.applicationType.message}</p>
-              )}
+              {errors.applicationType && <p className="text-sm text-destructive">{errors.applicationType.message}</p>}
             </div>
 
             {/* Category Selection */}
@@ -430,16 +397,14 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                       <SelectValue placeholder="Alege categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
+                      {categories.map((category) => (
+                          <SelectItem key={category.id as any} value={String(category.id)}>
                             {category.name}
                           </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.categoryId && (
-                      <p className="text-sm text-destructive">{errors.categoryId.message}</p>
-                  )}
+                  {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
                 </div>
             )}
 
@@ -448,11 +413,10 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                 <div className="space-y-2">
                   <Label>Produse selectate *</Label>
 
-                  {/* Selected products */}
                   {selectedProducts.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {selectedProducts.map((productId) => {
-                          const product = products?.find(p => p.id === productId);
+                          const product = products.find(p => String(p.id) === String(productId));
                           return product ? (
                               <Badge key={productId} variant="secondary" className="flex items-center gap-1">
                                 {product.name}
@@ -460,7 +424,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-auto p-0 w-4 h-4 hover:bg-destructive hover:text-destructive-foreground"
+                                    className="p-0 w-4 h-4 hover:bg-destructive hover:text-destructive-foreground"
                                     onClick={() => removeProduct(productId)}
                                 >
                                   <X className="w-3 h-3" />
@@ -471,20 +435,19 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                       </div>
                   )}
 
-                  {/* Product selector */}
                   <Select onValueChange={addProduct} value="">
                     <SelectTrigger className={errors.productIds ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Adaugă produs" />
                     </SelectTrigger>
                     <SelectContent>
                       {products
-                          ?.filter(product => !selectedProducts.includes(product.id))
+                          .filter(product => !selectedProducts.includes(String(product.id)))
                           .map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name} - {product.price} lei
+                              <SelectItem key={product.id as any} value={String(product.id)}>
+                                {product.name} — {product.price} lei
                               </SelectItem>
                           ))}
-                      {products?.filter(product => !selectedProducts.includes(product.id)).length === 0 && (
+                      {products.filter(product => !selectedProducts.includes(String(product.id))).length === 0 && (
                           <SelectItem value="" disabled>
                             Nu mai sunt produse disponibile
                           </SelectItem>
@@ -508,31 +471,14 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="minItems">Număr minim produse</Label>
-                <Input
-                    id="minItems"
-                    type="number"
-                    min="0"
-                    placeholder="ex: 2"
-                    {...register('minItems', { valueAsNumber: true })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Lasă gol pentru fără condiție
-                </p>
+                <Input id="minItems" type="number" min="0" placeholder="ex: 2" {...register('minItems', { valueAsNumber: true })} />
+                <p className="text-xs text-muted-foreground">Lasă gol pentru fără condiție</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="minSubtotal">Subtotal minim (lei)</Label>
-                <Input
-                    id="minSubtotal"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="ex: 100.00"
-                    {...register('minSubtotal', { valueAsNumber: true })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Lasă gol pentru fără condiție
-                </p>
+                <Input id="minSubtotal" type="number" step="0.01" min="0" placeholder="ex: 100.00" {...register('minSubtotal', { valueAsNumber: true })} />
+                <p className="text-xs text-muted-foreground">Lasă gol pentru fără condiție</p>
               </div>
             </div>
 
@@ -541,11 +487,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                 <Label>Data început</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                    >
+                    <Button type="button" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {startDate ? format(startDate, 'PPP', { locale: ro }) : 'Alege data'}
                     </Button>
@@ -566,11 +508,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                 <Label>Data sfârșit</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                    >
+                    <Button type="button" variant="outline" className="w-full justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {endDate ? format(endDate, 'PPP', { locale: ro }) : 'Alege data'}
                     </Button>
@@ -600,12 +538,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
             Anulează
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting
-                ? 'Se salvează...'
-                : offer
-                    ? 'Actualizează oferta'
-                    : 'Adaugă oferta'
-            }
+            {isSubmitting ? 'Se salvează...' : offer ? 'Actualizează oferta' : 'Adaugă oferta'}
           </Button>
         </div>
       </form>

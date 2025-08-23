@@ -8,14 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Search, Edit, Trash2, Star, Eye, EyeOff } from 'lucide-react';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { formatPrice } from '@/lib/format';
 import { ProductForm } from '@/components/admin/product-form';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Category, Product } from '@/types';
 import apiClient from '@/lib/api';
-import {CategoryCombobox} from "@/components/admin/CategoryCombobox";
+import { CategoryCombobox } from '@/components/admin/CategoryCombobox';
 
 const PAGE_SIZE = 10;
 
@@ -58,7 +57,14 @@ export default function AdminProductsPage() {
         page: currentPage,
         pageSize: PAGE_SIZE,
       });
-      setProducts(response.data);
+
+      // Normalize "recommended" from backend `is_recommended_now`
+      const normalized = (response.data || []).map((p: any) => ({
+        ...p,
+        recommended: Boolean(p.is_recommended_now),
+      }));
+
+      setProducts(normalized);
       setTotalProducts(response.total);
     } catch (e) {
       console.error(e);
@@ -82,6 +88,8 @@ export default function AdminProductsPage() {
     }
   };
 
+  // NOTE: If your backend no longer allows toggling "recommended" directly (because recommendation is scheduled),
+  // you can remove this handler. Keeping it as-is in case you still support it for now.
   const handleToggleRecommended = async (productId: number | string) => {
     try {
       const p: any = products.find((p) => String(p.id) === String(productId));
@@ -156,7 +164,7 @@ export default function AdminProductsPage() {
               />
             </div>
 
-            {/* Category filter (ScrollArea) */}
+            {/* Category filter */}
             <div className="w-full max-w-sm">
               <CategoryCombobox
                   categories={categories}
@@ -214,82 +222,119 @@ export default function AdminProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          {!!product.image && product.image_type === 'EXTERNAL' && (
-                              <div className="relative w-12 h-12 rounded-lg overflow-hidden">
-                                <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
-                              </div>
-                          )}
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{product.description}</p>
+                {products.map((product: any) => {
+                  const allergens: string[] = Array.isArray(product.allergens) ? product.allergens : [];
+                  const allergensLabel =
+                      allergens.length === 0
+                          ? null
+                          : allergens.length <= 2
+                              ? allergens.join(', ')
+                              : `${allergens.slice(0, 2).join(', ')} +${allergens.length - 2}`;
+
+                  return (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            {!!product.image && product.image_type === 'EXTERNAL' && (
+                                <div className="relative w-12 h-12 rounded-lg overflow-hidden">
+                                  <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
+                                </div>
+                            )}
+                            <div>
+                              <p className="font-medium">{product.name}</p>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{product.description}</p>
+                              {/* Nutritional values small hint */}
+                              {product.nutritional_values && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                    Val. nutriționale: {product.nutritional_values}
+                                  </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {categories.find((c) => String(c.id) === String((product as any).category?.id))?.name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold text-[hsl(var(--primary))]">
-                        {formatPrice(product.price)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                              variant={product.available ? 'default' : 'secondary'}
-                              className={
-                                product.available
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
-                              }
-                          >
-                            {product.available ? 'Disponibil' : 'Indisponibil'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {categories.find((c) => String(c.id) === String(product.category?.id))?.name}
                           </Badge>
-                          {(product as any).recommended && (
-                              <Badge className="bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
-                                <Star className="w-3 h-3 mr-1 fill-current" />
-                                Recomandat
-                              </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleAvailability(product.id)}
-                              title={product.available ? 'Marchează indisponibil' : 'Marchează disponibil'}
-                          >
-                            {product.available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleRecommended(product.id)}
-                              title={(product as any).recommended ? 'Elimină din recomandate' : 'Adaugă în recomandate'}
-                          >
-                            <Star className={`w-4 h-4 ${(product as any).recommended ? 'fill-current text-[hsl(var(--accent))]' : ''}`} />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setEditingProduct(product)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteProduct(product.id)}
-                              className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                ))}
+                        </TableCell>
+                        <TableCell className="font-semibold text-[hsl(var(--primary))]">
+                          {formatPrice(product.price)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Availability */}
+                            <Badge
+                                variant={product.available ? 'default' : 'secondary'}
+                                className={
+                                  product.available
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300'
+                                }
+                            >
+                              {product.available ? 'Disponibil' : 'Indisponibil'}
+                            </Badge>
+
+                            {/* In-stock info */}
+                            {product.in_stock ? (
+                                <Badge variant="outline" className="text-xs">
+                                  Stoc: {product.stock_type} • {product.stock_quantity}
+                                </Badge>
+                            ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Epuizat
+                                </Badge>
+                            )}
+
+                            {/* Recommended star */}
+                            {product.recommended && (
+                                <Badge className="bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))]">
+                                  <Star className="w-3 h-3 mr-1 fill-current" />
+                                  Recomandat
+                                </Badge>
+                            )}
+
+                            {/* Allergens */}
+                            {allergensLabel && (
+                                <Badge variant="outline" className="text-xs">
+                                  Alergeni: {allergensLabel}
+                                </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleAvailability(product.id)}
+                                title={product.available ? 'Marchează indisponibil' : 'Marchează disponibil'}
+                            >
+                              {product.available ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleToggleRecommended(product.id)}
+                                title={product.recommended ? 'Elimină din recomandate' : 'Adaugă în recomandate'}
+                            >
+                              <Star className={`w-4 h-4 ${product.recommended ? 'fill-current text-[hsl(var(--accent))]' : ''}`} />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setEditingProduct(product)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
 
@@ -323,7 +368,9 @@ export default function AdminProductsPage() {
                   >
                     ← Înapoi
                   </Button>
-                  <span className="text-sm text-muted-foreground">Pagina {currentPage} din {totalPages}</span>
+                  <span className="text-sm text-muted-foreground">
+                Pagina {currentPage} din {totalPages}
+              </span>
                   <Button
                       variant="outline"
                       size="sm"

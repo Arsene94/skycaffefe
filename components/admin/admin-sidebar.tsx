@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
+import {
   LayoutDashboard,
   Package,
   Grid3X3,
   Gift,
-  Star,
+  Star, CircleUserRound, Users,
 } from 'lucide-react';
 
 const navigation = [
@@ -22,6 +22,11 @@ const navigation = [
     name: 'Produse',
     href: '/admin/produse',
     icon: Package,
+  },
+  {
+    name: 'Clienți',
+    href: '/admin/clienti',
+    icon: CircleUserRound,
   },
   {
     name: 'Categorii',
@@ -38,6 +43,11 @@ const navigation = [
     href: '/admin/recomandate',
     icon: Star,
   },
+  {
+    name: 'Personal',
+    href: '/admin/personal',
+    icon: Users,
+  },
 ];
 
 export function AdminSidebar() {
@@ -50,7 +60,7 @@ export function AdminSidebar() {
           {navigation.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
-            
+
             return (
               <Button
                 key={item.name}
