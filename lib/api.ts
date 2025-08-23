@@ -326,6 +326,10 @@ class ApiClient {
         return this.request<any>(`/offers${qs}`);
     }
 
+    async getAdminOffer(id: number | string) {
+        return this.request<any>(`/admin/offers/${id}`);
+    }
+
     // Admin list (paginat ca la products)
     async getAdminOffers(params?: {
         search?: string;

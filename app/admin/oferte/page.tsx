@@ -12,19 +12,21 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Plus, Search, Edit, Trash2, Eye, EyeOff, Percent, DollarSign,
+  Plus, Search, Edit, Trash2, Eye, EyeOff, Percent, DollarSign, Gift,
 } from 'lucide-react';
 import { OfferForm } from '@/components/admin/offer-form';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api';
 
+type BXGY = { buy: number; get: number; limit?: number | null };
+
 type OfferItem = {
-  numericId: number;     // from API resource
-  id: string;            // code as string id (resource maps code -> id)
+  numericId: number;     // from API resource (int)
+  id: string;            // code as string id
   code: string;
   name: string;
   description?: string | null;
-  type: 'PERCENT' | 'FIXED';
+  type: 'PERCENT' | 'FIXED' | 'BXGY';
   value: number;
   applicationType: 'cart' | 'category' | 'product_ids';
   categoryId?: string | null;
@@ -35,6 +37,11 @@ type OfferItem = {
   productIds?: string[];
   startsAt?: string | null;
   endsAt?: string | null;
+  conditions?: {
+    minItems?: number;
+    minSubtotal?: number;
+    bxgy?: BXGY;
+  } | null;
 };
 
 type CategoryItem = {
@@ -45,9 +52,9 @@ type CategoryItem = {
 
 export default function AdminOffersPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<'all' | 'PERCENT' | 'FIXED'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'PERCENT' | 'FIXED' | 'BXGY'>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingOffer, setEditingOffer] = useState<OfferItem | null>(null);
+  const [editingOffer, setEditingOffer] = useState<any | null>(null);
 
   const [offers, setOffers] = useState<OfferItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -68,8 +75,8 @@ export default function AdminOffersPage() {
         code: o.code,
         name: o.name,
         description: o.description,
-        type: o.type,
-        value: o.value,
+        type: o.type, // poate fi PERCENT | FIXED | BXGY
+        value: Number(o.value ?? 0),
         applicationType: o.applicationType,
         categoryId: o.categoryId ?? null,
         stackable: !!o.stackable,
@@ -79,6 +86,7 @@ export default function AdminOffersPage() {
         productIds: o.productIds ?? [],
         startsAt: o.startsAt ?? null,
         endsAt: o.endsAt ?? null,
+        conditions: o.conditions ?? null, // <- aducem și conditions (bxgy e aici)
       }));
 
       setOffers(list);
@@ -96,8 +104,17 @@ export default function AdminOffersPage() {
   }, []);
 
   // ------- UI helpers -------
-  const getOfferTypeIcon = (type: string) => (type === 'PERCENT' ? Percent : DollarSign);
-  const getOfferTypeLabel = (type: string) => (type === 'PERCENT' ? 'Procent' : 'Sumă fixă');
+  const getOfferTypeIcon = (type: string) => {
+    if (type === 'PERCENT') return Percent;
+    if (type === 'FIXED') return DollarSign;
+    return Gift; // BXGY
+  };
+
+  const getOfferTypeLabel = (type: string) => {
+    if (type === 'PERCENT') return 'Procent';
+    if (type === 'FIXED') return 'Sumă fixă';
+    return 'Cumperi X, primești Y'; // BXGY
+  };
 
   const getApplicationTypeLabel = (type: string) => {
     const normalized = type === 'product_ids' ? 'productIds' : type;
@@ -145,7 +162,6 @@ export default function AdminOffersPage() {
   const handleToggleActive = async (offer: OfferItem) => {
     try {
       await apiClient.toggleOfferActive(offer.numericId);
-      // update locally
       setOffers(prev =>
           prev.map(o => (o.numericId === offer.numericId ? { ...o, active: !o.active } : o))
       );
@@ -167,19 +183,41 @@ export default function AdminOffersPage() {
     }
   };
 
-  // Called by OfferForm on save (CREATE)
+  // (CREATE)
   const handleCreateSave = async (payload: any) => {
     await apiClient.createOffer(payload);
     await loadAll();
-    // OfferForm va apela onClose singur, noi doar reîmprospătăm
   };
 
-  // Called by OfferForm on save (UPDATE)
+  // (UPDATE)
   const handleUpdateSave = async (payload: any) => {
     if (!editingOffer) return;
     await apiClient.updateOffer(editingOffer.numericId, payload);
     await loadAll();
-    // OfferForm va apela onClose singur
+  };
+
+  // Deschide edit cu fetch complet (include conditions.bxgy)
+  const openEdit = async (row: OfferItem) => {
+    try {
+      // asigură-te că ai metoda în apiClient (vezi mai jos)
+      const full = await apiClient.getAdminOffer(row.numericId);
+      const normalized = {
+        ...full,
+        applicationType:
+            (full.applicationType ?? full.application_type) === 'product_ids'
+                ? ('productIds' as any)
+                : (full.applicationType ?? full.application_type),
+        categoryId: full.categoryId ?? full.category_id ?? null,
+        productIds: full.productIds ?? full.product_ids ?? [],
+        numericId: Number(full.numericId ?? full.id ?? row.numericId),
+        startsAt: full.startsAt ?? full.starts_at ?? null,
+        endsAt: full.endsAt ?? full.ends_at ?? null,
+      };
+      setEditingOffer(normalized);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || 'Nu am putut încărca oferta pentru editare');
+    }
   };
 
   if (loading) {
@@ -253,6 +291,14 @@ export default function AdminOffersPage() {
                 >
                   <DollarSign className="w-4 h-4 mr-1" />
                   Sumă fixă
+                </Button>
+                <Button
+                    variant={selectedType === 'BXGY' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedType('BXGY')}
+                >
+                  <Gift className="w-4 h-4 mr-1" />
+                  BXGY
                 </Button>
               </div>
             </div>
@@ -328,6 +374,8 @@ export default function AdminOffersPage() {
                   const appLabel = getApplicationTypeLabel(offer.applicationType);
                   const catLabel = offer.categoryId ? categoryNameById(offer.categoryId) : '';
 
+                  const bxgy = offer.conditions?.bxgy as BXGY | undefined;
+
                   return (
                       <TableRow key={offer.numericId}>
                         <TableCell>
@@ -348,7 +396,14 @@ export default function AdminOffersPage() {
                         </TableCell>
 
                         <TableCell className="font-semibold">
-                          {offer.type === 'PERCENT' ? `${offer.value}%` : `${offer.value} lei`}
+                          {offer.type === 'PERCENT' && `${offer.value}%`}
+                          {offer.type === 'FIXED' && `${offer.value} lei`}
+                          {offer.type === 'BXGY' && (
+                              <span className="font-mono">
+                          {bxgy ? `${bxgy.buy} → ${bxgy.get}` : '—'}
+                                {bxgy?.limit ? ` (max ${bxgy.limit})` : ''}
+                        </span>
+                          )}
                         </TableCell>
 
                         <TableCell>
@@ -394,7 +449,7 @@ export default function AdminOffersPage() {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setEditingOffer(offer)}
+                                onClick={() => openEdit(offer)}
                                 title="Editează"
                             >
                               <Edit className="w-4 h-4" />
@@ -445,18 +500,7 @@ export default function AdminOffersPage() {
             </DialogHeader>
             {editingOffer && (
                 <OfferForm
-                    offer={{
-                      ...editingOffer,
-                      applicationType:
-                          editingOffer.applicationType === 'product_ids'
-                              ? ('productIds' as any)
-                              : editingOffer.applicationType,
-                      categoryId: editingOffer.categoryId ?? null,
-                      productIds: editingOffer.productIds ?? [],
-                      numericId: editingOffer.numericId,
-                      startsAt: editingOffer.startsAt,
-                      endsAt: editingOffer.endsAt,
-                    } as any}
+                    offer={editingOffer}
                     onSave={handleUpdateSave}
                     onClose={() => setEditingOffer(null)}
                 />

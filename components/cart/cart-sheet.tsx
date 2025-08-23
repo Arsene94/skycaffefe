@@ -53,7 +53,7 @@ export function CartSheet() {
                       className="object-cover"
                     />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm truncate">{item.product.name}</h4>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
@@ -73,7 +73,7 @@ export function CartSheet() {
                     >
                       <X className="w-3 h-3" />
                     </Button>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Button
                         variant="outline"

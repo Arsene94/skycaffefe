@@ -42,23 +42,46 @@ export interface CartItem {
 }
 
 export interface Offer {
-  id: string;
+  id: string;                 // usually equals `code`
+  numericId?: number;         // numeric DB id (admin use)
+  code?: string;              // explicit code if needed
   name: string;
-  description: string;
-  type: 'PERCENT' | 'FIXED';
-  value: number;
-  applicationType: 'cart' | 'category' | 'productIds';
-  categoryId?: string;
+  description?: string | null;
+  type: 'PERCENT' | 'FIXED' | 'BXGY';
+  value: number;              // BXGY ignores this (keep 0)
+  applicationType: 'cart' | 'category' | 'productIds' | 'product_ids';
+  categoryId?: string | null;
   productIds?: string[];
-  conditions: {
+  conditions?: {
     minItems?: number;
     minSubtotal?: number;
     startDate?: Date;
     endDate?: Date;
+    bxgy?: {
+      buy: number;
+      get: number;
+      limit?: number | null;
+    };
+  };
+  bxgy?: {
+    buy: number;
+    get: number;
+    limit?: number | null;
   };
   stackable: boolean;
   priority: number;
   active: boolean;
+  isActiveNow?: boolean;
+  startsAt?: string | Date | null;
+  endsAt?: string | Date | null;
+  category?: {
+    id: string;
+    name: string;
+    slug?: string;
+  };
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Order {
@@ -102,3 +125,8 @@ export const EU_ALLERGENS = [
   { id: 'lupin',       label: 'Lupin' },
   { id: 'molluscs',    label: 'Moluște' },
 ];
+
+export type OfferHint = {
+  code: string;
+  message: string;
+};

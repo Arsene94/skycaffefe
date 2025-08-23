@@ -219,8 +219,6 @@ export default function AdminRecommendedPage() {
   if (loading && !queue.length && !availableProducts.length) {
     return <div>Se încarcă...</div>;
   }
-console.log(queue)
-  console.log(queue.length)
   return (
       <div className="space-y-6">
         {/* Header */}

@@ -1,5 +1,5 @@
 export function formatPrice(price: number): string {
-  return `${price} lei`;
+  return `${price.toFixed(2)} lei`;
 }
 
 export function formatDate(date: Date): string {

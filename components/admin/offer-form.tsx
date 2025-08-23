@@ -11,47 +11,72 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, startOfToday } from 'date-fns';
 import { ro } from 'date-fns/locale';
 import apiClient from '@/lib/api';
 import type { Offer, Product, Category } from '@/types';
+import { CalendarIcon, X } from 'lucide-react';
 
 const offerSchema = z.object({
-  name: z.string().min(2, 'Numele trebuie să aibă cel puțin 2 caractere').max(100, 'Numele este prea lung'),
-  description: z.string().min(10, 'Descrierea trebuie să aibă cel puțin 10 caractere').max(500, 'Descrierea este prea lungă'),
-  type: z.union([z.literal('PERCENT'), z.literal('FIXED')]),
-  value: z.number().min(0.01, 'Valoarea trebuie să fie pozitivă').max(1000, 'Valoarea este prea mare'),
+  name: z.string().min(2).max(100),
+  description: z.string().min(10).max(500),
+  type: z.union([z.literal('PERCENT'), z.literal('FIXED'), z.literal('BXGY')]),
+  value: z.number().min(0).max(1000).optional(), // pentru BXGY nu e obligatoriu
+
+  // BXGY fields (UI-only)
+  bxgyBuy: z.number().min(1).optional(),
+  bxgyGet: z.number().min(1).optional(),
+  bxgyLimit: z.number().min(1).optional().nullable(),
+
   applicationType: z.union([z.literal('cart'), z.literal('category'), z.literal('productIds')]),
   categoryId: z.string().optional(),
   productIds: z.array(z.string()).optional(),
+
   minItems: z.number().min(0).optional().nullable(),
   minSubtotal: z.number().min(0).optional().nullable(),
+
   stackable: z.boolean(),
-  priority: z.number().min(1, 'Prioritatea trebuie să fie cel puțin 1').max(100, 'Prioritatea nu poate fi mai mare de 100'),
+  priority: z.number().min(1).max(100),
   active: z.boolean(),
 }).superRefine((data, ctx) => {
-  if (data.type === 'PERCENT' && data.value > 100) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Procentul nu poate fi mai mare de 100%', path: ['value'] });
+  if (data.type === 'PERCENT') {
+    const v = data.value ?? 0;
+    if (v <= 0 || v > 100) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Procent invalid (1-100)', path: ['value'] });
+    }
   }
+  if (data.type === 'FIXED') {
+    const v = data.value ?? 0;
+    if (v <= 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Valoare fixă trebuie să fie > 0', path: ['value'] });
+    }
+  }
+  if (data.type === 'BXGY') {
+    if (!data.bxgyBuy || data.bxgyBuy < 1) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Setează X (min 1)', path: ['bxgyBuy'] });
+    }
+    if (!data.bxgyGet || data.bxgyGet < 1) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Setează Y (min 1)', path: ['bxgyGet'] });
+    }
+  }
+
   if (data.applicationType === 'category' && !data.categoryId) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Trebuie să selectați o categorie', path: ['categoryId'] });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selectează o categorie', path: ['categoryId'] });
   }
   if (data.applicationType === 'productIds' && (!data.productIds || data.productIds.length === 0)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Trebuie să selectați cel puțin un produs', path: ['productIds'] });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Selectează cel puțin un produs', path: ['productIds'] });
   }
 });
 
 type OfferFormData = z.infer<typeof offerSchema>;
 
 interface OfferFormProps {
-  offer?: Offer | (Offer & { numericId?: number }); // acceptăm numericId de la admin list
+  offer?: Offer | (Offer & { numericId?: number; bxgy?: { buy: number; get: number; limit?: number | null } });
   onClose: () => void;
-  onSave?: (offer: Partial<Offer>) => Promise<void>; // dacă e prezent, îl folosim; altfel apelăm API direct
+  onSave?: (payload: any) => Promise<void>;
 }
 
 function slugify(input: string) {
@@ -65,32 +90,35 @@ function slugify(input: string) {
 
 export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
   const [selectedProducts, setSelectedProducts] = useState<string[]>(offer?.productIds || []);
-  const [startDate, setStartDate] = useState<Date | undefined>(
-      // suportăm atât startsAt/endsAt (din API), cât și conditions.startDate/endDate (din mock)
-      (offer as any)?.startsAt ? new Date((offer as any).startsAt) :
-          offer?.conditions?.startDate ? new Date(offer.conditions.startDate) : undefined
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-      (offer as any)?.endsAt ? new Date((offer as any).endsAt) :
-          offer?.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined
-  );
+  const [startDate, setStartDate] = useState<Date | undefined>((offer as any)?.startsAt ? new Date((offer as any).startsAt) : undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>((offer as any)?.endsAt ? new Date((offer as any).endsAt) : undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [products, setProducts] = useState<Product[]>();
   const [categories, setCategories] = useState<Category[]>();
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
 
   const form = useForm<OfferFormData>({
     resolver: zodResolver(offerSchema),
     defaultValues: {
       name: offer?.name || '',
       description: offer?.description || '',
-      type: offer?.type || 'PERCENT',
-      value: offer?.value || 0,
+      type: (offer?.type as any) || 'PERCENT',
+      value: offer?.type !== 'BXGY' ? offer?.value || 0 : undefined,
+
+      // ⬇️ citește corect din conditions.bxgy
+      bxgyBuy:     (offer as any)?.conditions?.bxgy?.buy    ?? undefined,
+      bxgyGet:     (offer as any)?.conditions?.bxgy?.get    ?? undefined,
+      bxgyLimit:   (offer as any)?.conditions?.bxgy?.limit  ?? undefined,
+
       applicationType: (offer?.applicationType as any) || 'cart',
       categoryId: (offer?.categoryId as any) || '',
       productIds: offer?.productIds || [],
-      minItems: (offer as any)?.minItems ?? offer?.conditions?.minItems ?? null,
-      minSubtotal: (offer as any)?.minSubtotal ?? offer?.conditions?.minSubtotal ?? null,
+
+      minItems:    (offer as any)?.conditions?.minItems    ?? null,
+      minSubtotal: (offer as any)?.conditions?.minSubtotal ?? null,
+
       stackable: offer?.stackable || false,
       priority: offer?.priority || 1,
       active: offer?.active ?? true,
@@ -103,7 +131,6 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
   const offerType = watch('type');
 
   useEffect(() => {
-    // data live
     (async () => {
       try {
         const [prodRes, catRes] = await Promise.all([
@@ -112,39 +139,43 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
         ]);
         setProducts(prodRes?.data ?? []);
         setCategories(catRes?.data ?? []);
-      } catch (e) {
-        console.error(e);
+      } catch {
         toast.error('Eroare la încărcarea produselor/categoriilor');
       }
     })();
   }, []);
 
-  // Update form when offer prop changes
   useEffect(() => {
     if (offer) {
       reset({
         name: offer.name || '',
         description: offer.description || '',
-        type: offer.type || 'PERCENT',
-        value: offer.value || 0,
+        type: (offer.type as any) || 'PERCENT',
+        value: offer.type !== 'BXGY' ? offer.value || 0 : undefined,
+
+        // ⬇️ citește corect din conditions.bxgy
+        bxgyBuy:     (offer as any)?.conditions?.bxgy?.buy    ?? undefined,
+        bxgyGet:     (offer as any)?.conditions?.bxgy?.get    ?? undefined,
+        bxgyLimit:   (offer as any)?.conditions?.bxgy?.limit  ?? undefined,
+
         applicationType: (offer.applicationType as any) || 'cart',
         categoryId: (offer.categoryId as any) || '',
         productIds: offer.productIds || [],
-        minItems: (offer as any)?.minItems ?? offer?.conditions?.minItems ?? null,
-        minSubtotal: (offer as any)?.minSubtotal ?? offer?.conditions?.minSubtotal ?? null,
+
+        minItems:    (offer as any)?.conditions?.minItems    ?? null,
+        minSubtotal: (offer as any)?.conditions?.minSubtotal ?? null,
+
         stackable: offer.stackable || false,
         priority: offer.priority || 1,
         active: offer.active ?? true,
       });
+
       setSelectedProducts(offer.productIds || []);
-      setStartDate((offer as any)?.startsAt ? new Date((offer as any).startsAt) :
-          offer?.conditions?.startDate ? new Date(offer.conditions.startDate) : undefined);
-      setEndDate((offer as any)?.endsAt ? new Date((offer as any).endsAt) :
-          offer?.conditions?.endDate ? new Date(offer.conditions.endDate) : undefined);
+      setStartDate((offer as any)?.startsAt ? new Date((offer as any).startsAt) : undefined);
+      setEndDate((offer as any)?.endsAt ? new Date((offer as any).endsAt) : undefined);
     }
   }, [offer, reset]);
 
-  // Clear dependent fields on application type change
   useEffect(() => {
     if (applicationType === 'cart') {
       setValue('categoryId', '');
@@ -158,7 +189,6 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
     }
   }, [applicationType, setValue]);
 
-  // Validate date range
   useEffect(() => {
     if (startDate && endDate && startDate > endDate) {
       toast.error('Data de început nu poate fi după data de sfârșit');
@@ -166,23 +196,20 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
     }
   }, [startDate, endDate]);
 
-  if (!products || !categories) {
-    return <div>Se încarcă...</div>;
-  }
+  if (!products || !categories) return <div>Se încarcă...</div>;
 
   const addProduct = (productId: string) => {
     if (productId && !selectedProducts.includes(productId)) {
-      const updatedProducts = [...selectedProducts, productId];
-      setSelectedProducts(updatedProducts);
-      setValue('productIds', updatedProducts);
+      const updated = [...selectedProducts, productId];
+      setSelectedProducts(updated);
+      setValue('productIds', updated);
       trigger('productIds');
     }
   };
-
   const removeProduct = (productId: string) => {
-    const updatedProducts = selectedProducts.filter(id => id !== productId);
-    setSelectedProducts(updatedProducts);
-    setValue('productIds', updatedProducts);
+    const updated = selectedProducts.filter(id => id !== productId);
+    setSelectedProducts(updated);
+    setValue('productIds', updated);
     trigger('productIds');
   };
 
@@ -192,24 +219,28 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      // map UI -> API payload
+      const conditions: any = {};
+      if (data.minItems != null) conditions.minItems = data.minItems;
+      if (data.minSubtotal != null) conditions.minSubtotal = data.minSubtotal;
+      if (data.type === 'BXGY') {
+        conditions.bxgy = {
+          buy: data.bxgyBuy!,
+          get: data.bxgyGet!,
+          ...(data.bxgyLimit ? { limit: data.bxgyLimit } : {}),
+        };
+      }
+
       const payload: any = {
-        // dacă edităm și avem code, îl păstrăm; altfel generăm unul din name
         code: (offer as any)?.code || slugify(data.name),
         name: data.name,
         description: data.description,
-        type: data.type, // 'PERCENT' | 'FIXED'
-        value: data.value,
-        application_type:
-            data.applicationType === 'productIds' ? 'product_ids' : data.applicationType, // API enum
-        category_id:
-            data.applicationType === 'category' && data.categoryId ? Number(data.categoryId) : null,
-        product_ids:
-            data.applicationType === 'productIds' ? (data.productIds || []).map(id => Number(id)) : [],
-        min_items: data.minItems ?? null,
-        min_subtotal: data.minSubtotal ?? null,
+        type: data.type,                                       // PERCENT | FIXED | BXGY
+        value: data.type === 'BXGY' ? 0 : (data.value ?? 0),   // nefolosit la BXGY
+        application_type: data.applicationType === 'productIds' ? 'product_ids' : data.applicationType,
+        category_id: data.applicationType === 'category' && data.categoryId ? Number(data.categoryId) : null,
+        product_ids: data.applicationType === 'productIds' ? (data.productIds || []).map(id => Number(id)) : [],
+        conditions: Object.keys(conditions).length ? conditions : null,
         stackable: data.stackable,
         priority: data.priority,
         active: data.active,
@@ -220,8 +251,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       if (onSave) {
         await onSave(payload);
       } else {
-        // apelăm direct API
-        const numericId = (offer as any)?.numericId ?? (offer as any)?.id; // fallback
+        const numericId = (offer as any)?.numericId ?? (offer as any)?.id;
         if (offer && numericId) {
           await apiClient.updateOffer(numericId, payload);
         } else {
@@ -229,13 +259,11 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
         }
       }
 
-      toast.success(offer ? 'Ofertă actualizată cu succes' : 'Ofertă adăugată cu succes');
+      toast.success(offer ? 'Ofertă actualizată' : 'Ofertă creată');
       onClose();
-    } catch (error: any) {
-      console.error('Error saving offer:', error);
-      toast.error(error?.message || 'Eroare la salvarea ofertei');
-    } finally {
-      setIsSubmitting(false);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || 'Eroare la salvarea ofertei');
     }
   };
 
@@ -243,30 +271,16 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Info */}
         <Card>
-          <CardHeader>
-            <CardTitle>Informații de bază</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Informații de bază</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nume ofertă *</Label>
-              <Input
-                  id="name"
-                  placeholder="Introduceți numele ofertei"
-                  {...register('name')}
-                  className={errors.name ? 'border-destructive' : ''}
-              />
+              <Label>Nume ofertă *</Label>
+              <Input {...register('name')} className={errors.name ? 'border-destructive' : ''} />
               {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="description">Descriere *</Label>
-              <Textarea
-                  id="description"
-                  rows={3}
-                  placeholder="Descrieți oferta..."
-                  {...register('description')}
-                  className={errors.description ? 'border-destructive' : ''}
-              />
+              <Label>Descriere *</Label>
+              <Textarea rows={3} {...register('description')} className={errors.description ? 'border-destructive' : ''} />
               {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
             </div>
           </CardContent>
@@ -274,19 +288,14 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
 
         {/* Discount Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle>Setări discount</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Setări discount</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="type">Tip discount *</Label>
+                <Label>Tip discount *</Label>
                 <Select
                     value={watch('type')}
-                    onValueChange={(value) => {
-                      setValue('type', value as 'PERCENT' | 'FIXED');
-                      trigger('value');
-                    }}
+                    onValueChange={(v) => setValue('type', v as any)}
                 >
                   <SelectTrigger className={errors.type ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Alege tipul" />
@@ -294,61 +303,63 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                   <SelectContent>
                     <SelectItem value="PERCENT">Procent (%)</SelectItem>
                     <SelectItem value="FIXED">Sumă fixă (lei)</SelectItem>
+                    <SelectItem value="BXGY">Cumperi X, primești Y</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="value">Valoare * {offerType === 'PERCENT' ? '(%)' : '(lei)'}</Label>
-                <Input
-                    id="value"
-                    type="number"
-                    step={offerType === 'PERCENT' ? '1' : '0.01'}
-                    min="0.01"
-                    max={offerType === 'PERCENT' ? '100' : '1000'}
-                    placeholder={offerType === 'PERCENT' ? 'ex: 20' : 'ex: 50.00'}
-                    {...register('value', { valueAsNumber: true, onChange: () => trigger('value') })}
-                    className={errors.value ? 'border-destructive' : ''}
-                />
-                {errors.value && <p className="text-sm text-destructive">{errors.value.message}</p>}
-              </div>
+              {offerType !== 'BXGY' && (
+                  <div className="space-y-2">
+                    <Label>Valoare * {offerType === 'PERCENT' ? '(%)' : '(lei)'}</Label>
+                    <Input
+                        type="text"
+                        inputMode="decimal"
+                        defaultValue={String(watch('value') ?? '')}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(',', '.');
+                          const parsed = parseFloat(raw);
+                          setValue('value', isNaN(parsed) ? 0 : parsed);
+                        }}
+                        className={errors.value ? 'border-destructive' : ''}
+                    />
+                    {errors.value && <p className="text-sm text-destructive">{errors.value.message}</p>}
+                  </div>
+              )}
             </div>
+
+            {offerType === 'BXGY' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cumperi X *</Label>
+                    <Input type="number" min={1} defaultValue={watch('bxgyBuy') ?? ''} onChange={(e) => setValue('bxgyBuy', Number(e.target.value))} />
+                    {errors.bxgyBuy && <p className="text-sm text-destructive">{errors.bxgyBuy.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Primești Y *</Label>
+                    <Input type="number" min={1} defaultValue={watch('bxgyGet') ?? ''} onChange={(e) => setValue('bxgyGet', Number(e.target.value))} />
+                    {errors.bxgyGet && <p className="text-sm text-destructive">{errors.bxgyGet.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Limită gratuități (opțional)</Label>
+                    <Input type="number" min={1} defaultValue={watch('bxgyLimit') ?? ''} onChange={(e) => setValue('bxgyLimit', e.target.value ? Number(e.target.value) : undefined)} />
+                  </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="priority">Prioritate *</Label>
-                <Input
-                    id="priority"
-                    type="number"
-                    min="1"
-                    max="100"
-                    placeholder="ex: 1"
-                    {...register('priority', { valueAsNumber: true })}
-                    className={errors.priority ? 'border-destructive' : ''}
-                />
-                <p className="text-xs text-muted-foreground">1 = prioritate maximă, 100 = prioritate minimă</p>
-                {errors.priority && <p className="text-sm text-destructive">{errors.priority.message}</p>}
+                <Label>Prioritate *</Label>
+                <Input type="number" min={1} max={100} {...register('priority', { valueAsNumber: true })} />
               </div>
-
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                      id="stackable"
-                      checked={watch('stackable')}
-                      onCheckedChange={(checked) => setValue('stackable', !!checked)}
-                  />
-                  <Label htmlFor="stackable">Stackable</Label>
+                  <Checkbox checked={watch('stackable')} onCheckedChange={(c) => setValue('stackable', !!c)} />
+                  <Label>Stackable</Label>
                 </div>
-                <p className="text-xs text-muted-foreground">Poate fi combinată cu alte oferte</p>
-
                 <div className="flex items-center space-x-2">
-                  <Checkbox
-                      id="active"
-                      checked={watch('active')}
-                      onCheckedChange={(checked) => setValue('active', !!checked)}
-                  />
-                  <Label htmlFor="active">Activă</Label>
+                  <Checkbox checked={watch('active')} onCheckedChange={(c) => setValue('active', !!c)} />
+                  <Label>Activă</Label>
                 </div>
               </div>
             </div>
@@ -357,18 +368,13 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
 
         {/* Application Rules */}
         <Card>
-          <CardHeader>
-            <CardTitle>Reguli de aplicare</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Reguli de aplicare</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="applicationType">Tip aplicare *</Label>
+              <Label>Tip aplicare *</Label>
               <Select
                   value={watch('applicationType')}
-                  onValueChange={(value) => {
-                    setValue('applicationType', value as any);
-                    trigger('applicationType');
-                  }}
+                  onValueChange={(v) => setValue('applicationType', v as any)}
               >
                 <SelectTrigger className={errors.applicationType ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Alege tipul de aplicare" />
@@ -382,25 +388,19 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
               {errors.applicationType && <p className="text-sm text-destructive">{errors.applicationType.message}</p>}
             </div>
 
-            {/* Category Selection */}
             {applicationType === 'category' && (
                 <div className="space-y-2">
-                  <Label htmlFor="categoryId">Categorie *</Label>
+                  <Label>Categorie *</Label>
                   <Select
                       value={watch('categoryId') || ''}
-                      onValueChange={(value) => {
-                        setValue('categoryId', value);
-                        trigger('applicationType');
-                      }}
+                      onValueChange={(v) => setValue('categoryId', v)}
                   >
                     <SelectTrigger className={errors.categoryId ? 'border-destructive' : ''}>
                       <SelectValue placeholder="Alege categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                          <SelectItem key={category.id as any} value={String(category.id)}>
-                            {category.name}
-                          </SelectItem>
+                      {(categories || []).map((c) => (
+                          <SelectItem key={String(c.id)} value={String(c.id)}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -408,25 +408,18 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                 </div>
             )}
 
-            {/* Product Selection */}
             {applicationType === 'productIds' && (
                 <div className="space-y-2">
                   <Label>Produse selectate *</Label>
 
                   {selectedProducts.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {selectedProducts.map((productId) => {
-                          const product = products.find(p => String(p.id) === String(productId));
-                          return product ? (
-                              <Badge key={productId} variant="secondary" className="flex items-center gap-1">
-                                {product.name}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="p-0 w-4 h-4 hover:bg-destructive hover:text-destructive-foreground"
-                                    onClick={() => removeProduct(productId)}
-                                >
+                        {selectedProducts.map(pid => {
+                          const p = (products || []).find(pp => String(pp.id) === String(pid));
+                          return p ? (
+                              <Badge key={pid} variant="secondary" className="flex items-center gap-1">
+                                {p.name}
+                                <Button type="button" variant="ghost" size="sm" className="p-0 w-4 h-4" onClick={() => removeProduct(pid)}>
                                   <X className="w-3 h-3" />
                                 </Button>
                               </Badge>
@@ -440,17 +433,15 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
                       <SelectValue placeholder="Adaugă produs" />
                     </SelectTrigger>
                     <SelectContent>
-                      {products
-                          .filter(product => !selectedProducts.includes(String(product.id)))
-                          .map((product) => (
-                              <SelectItem key={product.id as any} value={String(product.id)}>
-                                {product.name} — {product.price} lei
+                      {(products || [])
+                          .filter(p => !selectedProducts.includes(String(p.id)))
+                          .map(p => (
+                              <SelectItem key={String(p.id)} value={String(p.id)}>
+                                {p.name} — {p.price} lei
                               </SelectItem>
                           ))}
-                      {products.filter(product => !selectedProducts.includes(String(product.id))).length === 0 && (
-                          <SelectItem value="" disabled>
-                            Nu mai sunt produse disponibile
-                          </SelectItem>
+                      {(products || []).filter(p => !selectedProducts.includes(String(p.id))).length === 0 && (
+                          <SelectItem value="" disabled>Nu mai sunt produse disponibile</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -464,69 +455,65 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
 
         {/* Conditions */}
         <Card>
-          <CardHeader>
-            <CardTitle>Condiții</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Condiții</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="minItems">Număr minim produse</Label>
-                <Input id="minItems" type="number" min="0" placeholder="ex: 2" {...register('minItems', { valueAsNumber: true })} />
-                <p className="text-xs text-muted-foreground">Lasă gol pentru fără condiție</p>
+                <Label>Număr minim produse</Label>
+                <Input type="number" min="0" placeholder="ex: 2" {...register('minItems', { valueAsNumber: true })} />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="minSubtotal">Subtotal minim (lei)</Label>
-                <Input id="minSubtotal" type="number" step="0.01" min="0" placeholder="ex: 100.00" {...register('minSubtotal', { valueAsNumber: true })} />
-                <p className="text-xs text-muted-foreground">Lasă gol pentru fără condiție</p>
+                <Label>Subtotal minim (lei)</Label>
+                <Input type="number" step="0.01" min="0" placeholder="ex: 100.00" {...register('minSubtotal', { valueAsNumber: true })} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Start Date */}
               <div className="space-y-2">
                 <Label>Data început</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, 'PPP', { locale: ro }) : 'Alege data'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                        initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="relative w-full">
+                  <Button type="button" variant="outline" className="w-full justify-start" onClick={() => setStartDateOpen(p => !p)}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, 'PPP', { locale: ro }) : 'Alege data'}
+                  </Button>
+                  {startDateOpen && (
+                      <div className="absolute z-[9999] bg-white border mt-2 rounded-md shadow-lg">
+                        <Calendar
+                            mode="single"
+                            selected={startDate}
+                            onSelect={(d) => { if (d) { setStartDate(d); setStartDateOpen(false); } }}
+                            disabled={(d) => d < startOfToday()}
+                            initialFocus
+                        />
+                      </div>
+                  )}
+                </div>
               </div>
 
+              {/* End Date */}
               <div className="space-y-2">
                 <Label>Data sfârșit</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, 'PPP', { locale: ro }) : 'Alege data'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        disabled={(date) => {
-                          const today = new Date(new Date().setHours(0, 0, 0, 0));
-                          const minDate = startDate || today;
-                          return date < minDate;
-                        }}
-                        initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="relative w-full">
+                  <Button type="button" variant="outline" className="w-full justify-start" onClick={() => setEndDateOpen(p => !p)}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, 'PPP', { locale: ro }) : 'Alege data'}
+                  </Button>
+                  {endDateOpen && (
+                      <div className="absolute z-[9999] bg-white border mt-2 rounded-md shadow-lg">
+                        <Calendar
+                            mode="single"
+                            selected={endDate}
+                            onSelect={(d) => { if (d) { setEndDate(d); setEndDateOpen(false); } }}
+                            disabled={(d) => {
+                              const minDate = startDate || startOfToday();
+                              return d < minDate;
+                            }}
+                            initialFocus
+                        />
+                      </div>
+                  )}
+                </div>
               </div>
             </div>
           </CardContent>
@@ -534,12 +521,8 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
 
         {/* Actions */}
         <div className="flex justify-end space-x-4 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Anulează
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Se salvează...' : offer ? 'Actualizează oferta' : 'Adaugă oferta'}
-          </Button>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Anulează</Button>
+          <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Se salvează...' : offer ? 'Actualizează oferta' : 'Adaugă oferta'}</Button>
         </div>
       </form>
   );

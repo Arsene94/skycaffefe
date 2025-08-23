@@ -26,14 +26,6 @@ function isNearTarget(lat: number, lon: number, targetLat: number, targetLon: nu
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
 
-    // Debug logging
-    console.log('Distance calculation:');
-    console.log('Current position:', { lat, lon });
-    console.log('Target position:', { lat: targetLat, lon: targetLon });
-    console.log('Calculated distance (meters):', distance);
-    console.log('Max allowed distance:', maxMeters);
-    console.log('Is near target:', distance <= maxMeters);
-
     return distance <= maxMeters;
 }
 
@@ -53,11 +45,6 @@ export default function AdminLoginPage() {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const { latitude, longitude, accuracy } = pos.coords;
-
-                console.log('Geolocation success:');
-                console.log('Latitude:', latitude);
-                console.log('Longitude:', longitude);
-                console.log('Accuracy (meters):', accuracy);
 
                 const near = isNearTarget(
                     latitude,
@@ -92,7 +79,6 @@ export default function AdminLoginPage() {
         );
     }
 
-    console.log('Auth mode:', authMode);
 
     return authMode === 'pin' ? <PinLogin /> : <EmailLogin />;
 }
