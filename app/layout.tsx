@@ -46,7 +46,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
             <link rel="manifest" href="/manifest.json" />
             {/* Preload hero */}
-            <link rel="preload" as="image" href="/hero.webp" type="image/webp" fetchPriority="high" />
         </head>
 
         {/* overflow-x-hidden previne scroll-ul orizontal pe mobil fără a afecta desktopul */}

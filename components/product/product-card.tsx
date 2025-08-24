@@ -30,38 +30,41 @@ export function ProductCard({ product, showCategory = false, className, hideAddB
     <Card className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${className}`}>
       <CardContent className="p-0">
         {/* Image */}
-        <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg">
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+        {product.image && (
+            <div className="relative aspect-[4/3] overflow-hidden rounded-t-lg">
+              <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+              />
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.recommended && (
-              <Badge className="bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] hover:bg-[hsl(var(--accent))]">
-                <Star className="w-3 h-3 mr-1 fill-current" />
-                Recomandat
-              </Badge>
-            )}
-            {product.tags.some(tag => tag.id === 'premium') && (
-              <Badge variant="secondary">Premium</Badge>
-            )}
-            {product.tags.some(tag => tag.id === 'vegetarian') && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                Vegetarian
-              </Badge>
-            )}
-          </div>
+              {/* Badges */}
+              <div className="absolute top-3 left-3 flex flex-col gap-2">
+                {product.recommended && (
+                    <Badge className="bg-[hsl(var(--accent))] text-[hsl(var(--accent-foreground))] hover:bg-[hsl(var(--accent))]">
+                      <Star className="w-3 h-3 mr-1 fill-current" />
+                      Recomandat
+                    </Badge>
+                )}
+                {product.tags.some(tag => tag.id === 'premium') && (
+                    <Badge variant="secondary">Premium</Badge>
+                )}
+                {product.tags.some(tag => tag.id === 'vegetarian') && (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Vegetarian
+                    </Badge>
+                )}
+              </div>
 
-          {!product.available && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <Badge variant="destructive">Indisponibil</Badge>
+              {!product.available && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Badge variant="destructive">Indisponibil</Badge>
+                  </div>
+              )}
             </div>
-          )}
-        </div>
+        )}
+
 
         {/* Content */}
         <div className="p-4 space-y-3">
