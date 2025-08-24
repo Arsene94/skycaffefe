@@ -74,7 +74,7 @@ export function Header() {
 
   const navItems = [
     { href: '/', label: 'Acasă' },
-    { href: '/meniu', label: 'Meniu' },
+    { href: '/meniu', label: 'Meniu Delivery' },
     { href: '/meniu-digital', label: 'Meniu Digital' },
     { href: '/despre', label: 'Despre' },
   ];

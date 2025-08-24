@@ -622,6 +622,39 @@ class ApiClient {
         });
     }
 
+    async createQr(payload: {
+        uuid: string;
+        type: 'redirect' | 'info';
+        url?: string | null;
+        data?: Record<string, any> | null;
+        branding?: Record<string, any> | null;
+    }) {
+        return this.request<any>('/admin/qr', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            credentials: 'include',
+        });
+    }
+
+    async getAdminQrs(params?: { search?: string; page?: number; pageSize?: number }) {
+        const qs = params ? `?${new URLSearchParams(params as any)}` : '';
+        return this.request<any>(`/admin/qr${qs}`, { credentials: 'include' });
+    }
+
+    async deleteQr(id: number | string) {
+        return this.request<void>(`/admin/qr/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+        });
+    }
+
+    async getQr(uuid: string) {
+        return this.request<any>(`/qr/${encodeURIComponent(uuid)}`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+    }
+
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

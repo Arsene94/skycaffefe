@@ -13,7 +13,7 @@ import {
   CircleUserRound,
   Users,
   MapPin,
-  BringToFront,
+  BringToFront, QrCode,
 } from 'lucide-react';
 import Can from './Can';
 
@@ -72,6 +72,12 @@ const navigation = [
     icon: MapPin,
     role: 'MANAGER'
   },
+  {
+    name: 'Cod QR',
+    href: '/admin/codqr',
+    icon: QrCode,
+    role: 'MANAGER'
+  }
 ];
 
 export function AdminSidebar() {
