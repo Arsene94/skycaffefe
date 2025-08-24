@@ -240,16 +240,19 @@ export default function AdminProductsPage() {
                   return (
                       <TableRow key={product.id}>
                         <TableCell>
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             {!!product.image && product.image_type === 'EXTERNAL' && (
-                                <div className="relative w-12 h-12 rounded-lg overflow-hidden">
-                                  <Image src={product.image} alt={product.name} fill className="object-cover" unoptimized />
-                                </div>
+                                <Image
+                                    src={product.image}
+                                    alt={product.name || 'Produs'}
+                                    width={48}
+                                    height={48}
+                                    className="rounded-lg object-cover shrink-0"
+                                />
                             )}
-                            <div>
-                              <p className="font-medium">{product.name}</p>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{product.name}</p>
                               <p className="text-sm text-muted-foreground line-clamp-1">{product.description}</p>
-                              {/* Nutritional values small hint */}
                               {product.nutritional_values && (
                                   <p className="text-xs text-muted-foreground line-clamp-1">
                                     Val. nutriționale: {product.nutritional_values}

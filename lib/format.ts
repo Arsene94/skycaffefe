@@ -1,4 +1,7 @@
 export function formatPrice(price: number): string {
+  if (typeof price !== 'number' || isNaN(price)) {
+    price = Number(price) || 0;
+  }
   return `${price.toFixed(2)} lei`;
 }
 

@@ -51,7 +51,12 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: ' skycaffebe.dacars.ro'
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'skycaffebe.dacars.ro',
+        pathname: '/storage/products/**',
+      },
     ],
     qualities: [70, 75, 85, 100],
     formats: ['image/avif', 'image/webp'],

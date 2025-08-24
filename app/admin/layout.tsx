@@ -1,20 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from "@/contexts/auth-context";
 import { AdminHeader } from '@/components/admin/admin-header';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 
 export default function AdminLayout({
-  children,
-}: {
+                                      children,
+                                    }: {
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Auth guard
   useEffect(() => {
     if (!loading) {
       if (!user && pathname !== '/admin/login') {
@@ -31,24 +33,29 @@ export default function AdminLayout({
   // Show loading or redirect if not authenticated
   if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER' && user?.role !== 'EMPLOYEE') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--primary))] mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Redirecting...</p>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[hsl(var(--primary))] mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Redirecting...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminHeader />
-      <div className="flex">
-        <AdminSidebar />
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+      <div className="min-h-screen bg-background">
+        <AdminHeader onToggleSidebar={() => setSidebarOpen(true)} />
+        <div className="flex">
+          {/* Desktop sidebar (unchanged) + Mobile off-canvas */}
+          <AdminSidebar
+              isOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+              onItemClick={() => setSidebarOpen(false)}
+          />
+          <main className="container flex-1 p-4 sm:p-5 lg:p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
   );
 }

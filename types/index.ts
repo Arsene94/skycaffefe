@@ -99,7 +99,7 @@ export interface Order {
   discount: number;
   total: number;
   createdAt: Date;
-  status: 'pending' | 'confirmed' | 'preparing' | 'delivered';
+  status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'completed' | 'canceled';
 }
 
 export interface AdminStats {

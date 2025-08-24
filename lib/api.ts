@@ -589,18 +589,33 @@ class ApiClient {
         return this.request<any>(`/orders/${id}`);
     }
 
-    // async updateOrderStatus(id: string | number, status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'completed' | 'canceled') {
-    //     return this.request<any>(`/orders/${id}/status`, {
-    //         method: 'POST',
-    //         body: JSON.stringify({ status }),
-    //     });
-    // }
-    //
-    // async cancelOrder(id: string | number) {
-    //     return this.request<any>(`/orders/${id}/cancel`, {
-    //         method: 'POST',
-    //     });
-    // }
+    async updateOrderStatus(id: string | number, status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'completed' | 'canceled') {
+        return this.request<any>(`/orders/${id}/status`, {
+            method: 'POST',
+            body: JSON.stringify({ status }),
+        });
+    }
+
+    async cancelOrder(id: string | number) {
+        return this.request<any>(`/orders/${id}/cancel`, {
+            method: 'POST',
+        });
+    }
+
+    async updateOrder(
+        id: string | number,
+        payload: {
+            items?: { product_id: number; quantity: number }[];
+            notes?: string | null;
+            payment_method?: 'cash' | 'card';
+            delivery_type?: 'delivery' | 'pickup';
+        }
+    ) {
+        return this.request<any>(`/orders/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        });
+    }
 
     // Staff (admin/manager)
     async getStaff(params?: { search?: string; page?: number; pageSize?: number }) {
