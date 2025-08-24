@@ -16,7 +16,7 @@ import {
     ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight,
     Plus, Minus, Trash2, CreditCard, Banknote,
 } from 'lucide-react';
-import { formatPrice, formatDate } from '@/lib/format';
+import {formatPrice, formatDate, generateOrderId} from '@/lib/format';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -861,6 +861,7 @@ function CreateOrderDialog({
         try {
             setSubmitting(true);
             const payload = {
+                order_id: generateOrderId(),
                 as_admin: 1, // hint pentru backend (poți ignora dacă tratezi automat user_id)
                 delivery_type: deliveryType,
                 payment_method: paymentMethod,
