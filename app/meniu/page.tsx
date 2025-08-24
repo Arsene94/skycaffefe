@@ -374,7 +374,7 @@ function MenuPageContent() {
                               scrollMarginTop: `calc(${HEADER_HEIGHT}px + ${BAR_HEIGHT}px + ${EXTRA_MARGIN}px)`,
                             }}
                         >
-                          <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center mb-4 gap-2">
                             <h3 className="text-xl font-semibold">{cat.name}</h3>
                             <Badge variant="secondary">
                               {productCounts[String(cat.id)] ?? 0}

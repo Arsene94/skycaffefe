@@ -12,9 +12,10 @@ interface ProductCardProps {
   product: Product;
   showCategory?: boolean;
   className?: string;
+  hideAddButton?: boolean
 }
 
-export function ProductCard({ product, showCategory = false, className }: ProductCardProps) {
+export function ProductCard({ product, showCategory = false, className, hideAddButton }: ProductCardProps) {
   const { addItem } = useCartStore();
 
   const handleAddToCart = () => {
@@ -106,14 +107,14 @@ export function ProductCard({ product, showCategory = false, className }: Produc
               </div>
           )}
 
-          <Button
+          {!hideAddButton && (<Button
             className="w-full"
             onClick={handleAddToCart}
             disabled={!product.available}
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
             {product.available ? 'Adaugă în coș' : 'Indisponibil'}
-          </Button>
+          </Button>)}
         </div>
       </CardContent>
     </Card>

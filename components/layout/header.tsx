@@ -19,6 +19,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { formatPrice } from '@/lib/format';
+import {usePathname} from "next/navigation";
 
 type CartState = ReturnType<typeof useCartStore.getState>;
 
@@ -26,6 +27,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   const itemCount         = useCartStore((s: CartState) => s.itemCount);
   const openCart          = useCartStore((s: CartState) => s.openCart);
@@ -73,6 +75,7 @@ export function Header() {
   const navItems = [
     { href: '/', label: 'Acasă' },
     { href: '/meniu', label: 'Meniu' },
+    { href: '/meniu-digital', label: 'Meniu Digital' },
     { href: '/despre', label: 'Despre' },
   ];
 
@@ -92,7 +95,9 @@ export function Header() {
 
             <nav className="hidden md:flex items-center space-x-8">
               {navItems.map((item) => (
-                  <Link key={item.href} href={item.href} className="text-foreground/80 hover:text-primary transition-colors font-medium">
+                  <Link key={item.href} href={item.href} className={cn(`text-foreground/80 hover:text-primary transition-colors font-medium`, {
+                    'text-primary': pathname === item.href,
+                  })}>
                     {item.label}
                   </Link>
               ))}
