@@ -321,22 +321,24 @@ export default function HomePage() {
                 </p>
               </header>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
+              <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
                 {loadingRecs ? (
                     Array.from({ length: 6 }).map((_, i) => (
-                        <article key={i} role="listitem" aria-busy="true">
-                          <Card>
-                            <CardContent className="p-0">
-                              <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
-                              <div className="p-4 space-y-3">
-                                <Skeleton className="h-6 w-3/4" />
-                                <Skeleton className="h-4 w-1/2" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-10 w-full" />
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </article>
+                        <li key={i}>
+                          <article key={i} aria-busy="true">
+                            <Card>
+                              <CardContent className="p-0">
+                                <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+                                <div className="p-4 space-y-3">
+                                  <Skeleton className="h-6 w-3/4" />
+                                  <Skeleton className="h-4 w-1/2" />
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-10 w-full" />
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </article>
+                        </li>
                     ))
                 ) : recommendedProducts.length > 0 ? (
                     recommendedProducts.map((product) => (
@@ -353,7 +355,7 @@ export default function HomePage() {
                       Momentan nu există preparate recomandate.
                     </p>
                 )}
-              </div>
+              </ul>
 
               {recommendedProducts.length > 0 && (
                   <div className="text-center">
