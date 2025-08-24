@@ -37,24 +37,28 @@ export function Footer() {
                   role="list"
                   aria-label="Rețele sociale"
               >
-                <Link
-                    href="https://instagram.com/skycaffe"
-                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
-                    aria-label="Urmărește-ne pe Instagram"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                  <Instagram className="w-5 h-5" />
-                </Link>
-                <Link
-                    href="https://facebook.com/skycaffe"
-                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
-                    aria-label="Urmărește-ne pe Facebook"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                  <Facebook className="w-5 h-5" />
-                </Link>
+                <div role="listitem">
+                  <Link
+                      href="https://instagram.com/skycaffe"
+                      className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
+                      aria-label="Urmărește-ne pe Instagram"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                  >
+                    <Instagram className="w-5 h-5" />
+                  </Link>
+                </div>
+                <div role="listitem">
+                  <Link
+                      href="https://facebook.com/skycaffe"
+                      className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
+                      aria-label="Urmărește-ne pe Facebook"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                  >
+                    <Facebook className="w-5 h-5" />
+                  </Link>
+                </div>
               </div>
             </div>
 

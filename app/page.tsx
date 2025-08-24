@@ -254,7 +254,7 @@ export default function HomePage() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" role="list">
                 {loadingCats ? (
                     Array.from({ length: 6 }).map((_, i) => (
-                        <article key={i} role="listitem" aria-busy="true">
+                        <article key={i} aria-busy="true">
                           <Card className="h-full">
                             <CardContent className="p-6 text-center">
                               <Skeleton className="w-16 h-16 mx-auto mb-4 rounded-full" />
@@ -269,7 +269,7 @@ export default function HomePage() {
                       const Icon = categoryIcons[(category.icon as keyof typeof categoryIcons) ?? 'grid'] || Grid3X3;
 
                       return (
-                          <article key={category.id} role="listitem">
+                          <article key={category.id}>
                             <Link
                                 href={`/meniu?category=${category.id}`}
                                 aria-describedby={`category-${category.id}-description`}
