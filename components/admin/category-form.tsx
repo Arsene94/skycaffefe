@@ -6,10 +6,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Pizza, UtensilsCrossed, ChefHat, Leaf, Cake, Coffee, Grid3X3, Utensils, Apple, Wine,
-  Beer, Shrimp, Fish, CookingPot,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Pizza,
+  UtensilsCrossed,
+  ChefHat,
+  Leaf,
+  Cake,
+  Coffee,
+  Grid3X3,
+  Utensils,
+  Apple,
+  Wine,
+  Beer,
+  Shrimp,
+  Fish,
+  CookingPot,
 } from 'lucide-react';
 import { Category } from '@/types';
 import { toast } from 'sonner';

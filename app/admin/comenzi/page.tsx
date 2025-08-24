@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 
 import apiClient from '@/lib/api';
-import { formatDate, formatPrice, formatShortDate } from '@/lib/format';
+import {formatDate, formatPrice, formatShortDate, generateOrderId} from '@/lib/format';
 
 /* ===========================
    Tipuri
@@ -848,8 +848,10 @@ function CreateOrderDialog({
             toast.error('Completează datele comenzii.');
             return;
         }
+        setSubmitting(true);
         try {
             const payload = {
+                order_id: generateOrderId(),
                 delivery_type: deliveryType,
                 payment_method: paymentMethod,
                 customer_name: name.trim(),
@@ -870,6 +872,8 @@ function CreateOrderDialog({
         } catch (e: any) {
             console.error(e);
             toast.error(e?.message || 'Nu am putut crea comanda');
+        } finally {
+            setSubmitting(false);
         }
     };
 

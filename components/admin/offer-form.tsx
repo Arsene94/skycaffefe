@@ -214,6 +214,7 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
   };
 
   const onSubmit = async (data: OfferFormData) => {
+    setIsSubmitting(true);
     if (startDate && endDate && startDate > endDate) {
       toast.error('Data de început nu poate fi după data de sfârșit');
       return;
@@ -264,6 +265,8 @@ export function OfferForm({ offer, onClose, onSave }: OfferFormProps) {
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message || 'Eroare la salvarea ofertei');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

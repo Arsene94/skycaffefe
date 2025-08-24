@@ -19,7 +19,6 @@ import {
   Leaf,
   Cake,
   Coffee,
-  Quote,
   Grid3X3,
   Utensils,
   Apple,
@@ -39,7 +38,6 @@ import { useEffect, useState } from "react";
 import { Category, Product } from "@/types";
 import apiClient from "@/lib/api";
 import { toast } from "sonner";
-import RelativeTime from "@/components/layout/time-ago";
 import { Skeleton } from "@/components/ui/skeleton";
 import heroImage from '@/public/hero.webp';
 

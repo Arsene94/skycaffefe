@@ -1,4 +1,3 @@
-// components/cart/cart-sheet.tsx
 'use client';
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';

@@ -9,7 +9,11 @@ import {
   Package,
   Grid3X3,
   Gift,
-  Star, CircleUserRound, Users, MapPin, BringToFront,
+  Star,
+  CircleUserRound,
+  Users,
+  MapPin,
+  BringToFront,
 } from 'lucide-react';
 import Can from './Can';
 

@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { formatPrice } from '@/lib/format';
+import {formatPrice, generateOrderId} from '@/lib/format';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { CartSheet } from '@/components/cart/cart-sheet';
@@ -234,6 +234,7 @@ export default function CheckoutPage() {
     }
 
     const backendPayload = {
+      order_id: generateOrderId(),
       delivery_type: deliveryType,
       payment_method: paymentMethod,
       customer_name: customerName.trim(),

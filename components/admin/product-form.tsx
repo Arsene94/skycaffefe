@@ -344,7 +344,7 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         available: data.available ?? true,
 
         // Inventory
-        in_stock: !!data.in_stock,
+        in_stock: data.in_stock,
         stock_type: normalizedStockType,
         stock_quantity: normalizedQuantity,
         nutritional_values: (data.nutritional_values || '').trim(),

@@ -10,7 +10,6 @@ export interface User {
   name: string | null;
   phone?: string | null;
   role?: string | null;
-  // poți adăuga addresses, totalOrders etc. dacă ai nevoie în UI
 }
 
 interface AuthContextType {

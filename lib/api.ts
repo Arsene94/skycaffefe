@@ -257,9 +257,9 @@ class ApiClient {
         });
     }
 
-    async getCategory(id: string | number) {
-        return this.request<any>(`/admin/categories/${id}`);
-    }
+    // async getCategory(id: string | number) {
+    //     return this.request<any>(`/admin/categories/${id}`);
+    // }
 
     async createCategory(payload: {
         name: string;
@@ -297,12 +297,12 @@ class ApiClient {
         });
     }
 
-    async updateCategoryOrder(orders: { id: string | number; order: number }[]) {
-        return this.request<any>(`/admin/categories/order`, {
-            method: 'POST',
-            body: JSON.stringify({ orders }),
-        });
-    }
+    // async updateCategoryOrder(orders: { id: string | number; order: number }[]) {
+    //     return this.request<any>(`/admin/categories/order`, {
+    //         method: 'POST',
+    //         body: JSON.stringify({ orders }),
+    //     });
+    // }
 
     async getPopularCategories() {
         return this.request<any>('/categories/popular', {
@@ -462,20 +462,20 @@ class ApiClient {
         });
     }
 
-    async reorderOffers(orders: { id: number | string; priority: number }[]) {
-        return this.request<any>('/admin/offers/reorder', {
-            method: 'POST',
-            body: JSON.stringify({ orders }),
-        });
-    }
-
-    // doar pentru application_type = product_ids
-    async syncOfferProducts(id: number | string, product_ids: (number | string)[]) {
-        return this.request<any>(`/admin/offers/${id}/products`, {
-            method: 'PUT',
-            body: JSON.stringify({ product_ids }),
-        });
-    }
+    // async reorderOffers(orders: { id: number | string; priority: number }[]) {
+    //     return this.request<any>('/admin/offers/reorder', {
+    //         method: 'POST',
+    //         body: JSON.stringify({ orders }),
+    //     });
+    // }
+    //
+    // // doar pentru application_type = product_ids
+    // async syncOfferProducts(id: number | string, product_ids: (number | string)[]) {
+    //     return this.request<any>(`/admin/offers/${id}/products`, {
+    //         method: 'PUT',
+    //         body: JSON.stringify({ product_ids }),
+    //     });
+    // }
 
     // ---- Clients (Admin) ----
     async getAdminClients(params?: { search?: string; page?: number; pageSize?: number }) {
@@ -556,6 +556,7 @@ class ApiClient {
     // Tipul payload-ului de creare (aliniat cu controllerul)
     // (Poți muta într-un fișier de tipuri dacă vrei)
     async createOrder(payload: {
+        order_id: string;
         delivery_type: 'delivery' | 'pickup';
         payment_method: 'cash' | 'card';
         customer_name: string;
@@ -588,18 +589,18 @@ class ApiClient {
         return this.request<any>(`/orders/${id}`);
     }
 
-    async updateOrderStatus(id: string | number, status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'completed' | 'canceled') {
-        return this.request<any>(`/orders/${id}/status`, {
-            method: 'POST',
-            body: JSON.stringify({ status }),
-        });
-    }
-
-    async cancelOrder(id: string | number) {
-        return this.request<any>(`/orders/${id}/cancel`, {
-            method: 'POST',
-        });
-    }
+    // async updateOrderStatus(id: string | number, status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'completed' | 'canceled') {
+    //     return this.request<any>(`/orders/${id}/status`, {
+    //         method: 'POST',
+    //         body: JSON.stringify({ status }),
+    //     });
+    // }
+    //
+    // async cancelOrder(id: string | number) {
+    //     return this.request<any>(`/orders/${id}/cancel`, {
+    //         method: 'POST',
+    //     });
+    // }
 
     // Staff (admin/manager)
     async getStaff(params?: { search?: string; page?: number; pageSize?: number }) {
