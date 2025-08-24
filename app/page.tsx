@@ -1,8 +1,14 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { CartSheet } from '@/components/cart/cart-sheet';
+const Footer = dynamic(() => import('@/components/layout/footer').then(m => ({ default: m.Footer })), {
+  ssr: false,
+});
+const CartSheet = dynamic(
+    () => import('@/components/cart/cart-sheet').then(m => ({ default: m.CartSheet })),
+    { ssr: false }
+);
 import { ProductCard } from '@/components/product/product-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -161,7 +167,7 @@ export default function HomePage() {
               />
 
             <div className="relative z-10 text-center text-white px-4 max-w-4xl">
-              <div className="animate-fade-in">
+              <div>
                 <Badge className="bg-white/20 text-white border-white/30 mb-4" role="status" aria-label="Experiență rooftop">
                   Rooftop Experience
                 </Badge>
