@@ -74,6 +74,7 @@ export default function HomePage() {
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [popularCategories, setPopularCategories] = useState<Category[]>();
   const [loadingRecs, setLoadingRecs] = useState(true);
+  const [loadingCats, setLoadingCats] = useState(true);
 
   useEffect(() => {
     const fetchPopularCategories = async () => {
@@ -83,6 +84,8 @@ export default function HomePage() {
       } catch (error) {
         console.error(error);
         toast.error('Eroare la încărcarea categoriilor');
+      } finally {
+        setLoadingCats(false);
       }
     };
     fetchPopularCategories();
@@ -139,15 +142,16 @@ export default function HomePage() {
 
         <main role="main">
           {/* Hero Section - Enhanced for SEO and accessibility */}
-          <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center overflow-hidden">
+          <section className="relative h-[70vh] lg:h-[80vh]">
             <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh]  aspect-[16/9] overflow-hidden">
               <Image
                   src="/hero.webp"
                   alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
                   fill
-                  sizes="100vw"
+                  sizes="(max-width: 768px) 100vw, 1000px"
                   className="object-cover"
                   priority
+                  fetchPriority="high"
                   quality={85}
                   placeholder="blur"
                   blurDataURL="data:image/webp;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGBobHB0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyovBd2FgvWp8/sVoLakHWp8/sVoLakHWp8/sVoLaktLvqAFNOsHu5vIk9LZDHqbmg=="
@@ -235,20 +239,35 @@ export default function HomePage() {
           </section>
 
           {/* Categories Section */}
-          {popularCategories && popularCategories.length > 0 && (
-              <section className="py-16 bg-gradient-to-b from-background to-muted/20" aria-labelledby="categories-heading">
-                <div className="container mx-auto px-4">
-                  <header className="text-center mb-12">
-                    <h2 id="categories-heading" className="text-3xl lg:text-4xl font-bold mb-4">
-                      Categorii <span className="text-[hsl(var(--primary))]">populare</span>
-                    </h2>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                      Descoperă varietatea noastră de preparate, de la pizza artizanală la deserturi rafinate
-                    </p>
-                  </header>
+          <section
+              className="py-16 bg-gradient-to-b from-background to-muted/20 min-h-[60vh]"
+              aria-labelledby="categories-heading"
+          >
+            <div className="container mx-auto px-4">
+              <header className="text-center mb-12">
+                <h2 id="categories-heading" className="text-3xl lg:text-4xl font-bold mb-4">
+                  Categorii <span className="text-[hsl(var(--primary))]">populare</span>
+                </h2>
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                  Descoperă varietatea noastră de preparate, de la pizza artizanală la deserturi rafinate
+                </p>
+              </header>
 
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" role="list">
-                    {popularCategories.map((category) => {
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" role="list">
+                {loadingCats ? (
+                    Array.from({ length: 6 }).map((_, i) => (
+                        <article key={i} role="listitem" aria-busy="true">
+                          <Card className="h-full">
+                            <CardContent className="p-6 text-center">
+                              <Skeleton className="w-16 h-16 mx-auto mb-4 rounded-full" />
+                              <Skeleton className="h-4 w-3/4 mx-auto mb-2" />
+                              <Skeleton className="h-3 w-full" />
+                            </CardContent>
+                          </Card>
+                        </article>
+                    ))
+                ) : popularCategories && popularCategories.length > 0 ? (
+                    popularCategories.map((category) => {
                       const Icon = categoryIcons[(category.icon as keyof typeof categoryIcons) ?? 'grid'] || Grid3X3;
 
                       return (
@@ -278,14 +297,18 @@ export default function HomePage() {
                             </Link>
                           </article>
                       );
-                    })}
-                  </div>
-                </div>
-              </section>
-          )}
+                    })
+                ) : (
+                    <p className="text-center col-span-full text-muted-foreground">
+                      Momentan nu există categorii populare.
+                    </p>
+                )}
+              </div>
+            </div>
+          </section>
 
           {/* Recommended Products */}
-          <section className="py-16 min-h-[60vh] bg-muted/20" aria-labelledby="recommended-heading">
+          <section className="py-16 min-h-[80vh] bg-muted/20" aria-labelledby="recommended-heading">
             <div className="container mx-auto px-4">
               <header className="text-center mb-12">
                 <div className="flex items-center justify-center space-x-2 mb-4">
@@ -302,7 +325,7 @@ export default function HomePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
                 {loadingRecs ? (
-                    Array.from({ length: 3 }).map((_, i) => (
+                    Array.from({ length: 6 }).map((_, i) => (
                         <article key={i} role="listitem" aria-busy="true">
                           <Card>
                             <CardContent className="p-0">
