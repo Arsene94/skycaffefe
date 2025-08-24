@@ -51,8 +51,6 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
 
-        {/* Performance hints */}
-        <link rel="preload" href="/hero.jpeg" as="image" type="image/jpeg" fetchPriority="high" />
       </head>
       <body className="font-sans">
       <AuthProvider>
