@@ -251,10 +251,10 @@ export default function HomePage() {
                 </p>
               </header>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" role="list">
+              <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" aria-label="Categorii populare">
                 {loadingCats ? (
                     Array.from({ length: 6 }).map((_, i) => (
-                        <article key={i} aria-busy="true">
+                        <li key={i} aria-busy="true">
                           <Card className="h-full">
                             <CardContent className="p-6 text-center">
                               <Skeleton className="w-16 h-16 mx-auto mb-4 rounded-full" />
@@ -262,14 +262,15 @@ export default function HomePage() {
                               <Skeleton className="h-3 w-full" />
                             </CardContent>
                           </Card>
-                        </article>
+                        </li>
                     ))
                 ) : popularCategories && popularCategories.length > 0 ? (
                     popularCategories.map((category) => {
-                      const Icon = categoryIcons[(category.icon as keyof typeof categoryIcons) ?? 'grid'] || Grid3X3;
+                      const Icon =
+                          categoryIcons[(category.icon as keyof typeof categoryIcons) ?? 'grid'] || Grid3X3;
 
                       return (
-                          <article key={category.id}>
+                          <li key={category.id}>
                             <Link
                                 href={`/meniu?category=${category.id}`}
                                 aria-describedby={`category-${category.id}-description`}
@@ -293,15 +294,15 @@ export default function HomePage() {
                                 </CardContent>
                               </Card>
                             </Link>
-                          </article>
+                          </li>
                       );
                     })
                 ) : (
-                    <p className="text-center col-span-full text-muted-foreground">
+                    <li className="col-span-full text-center text-muted-foreground">
                       Momentan nu există categorii populare.
-                    </p>
+                    </li>
                 )}
-              </div>
+              </ul>
             </div>
           </section>
 
@@ -321,41 +322,39 @@ export default function HomePage() {
                 </p>
               </header>
 
-              <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
-                {loadingRecs ? (
-                    Array.from({ length: 6 }).map((_, i) => (
-                        <li key={i}>
-                          <article key={i} aria-busy="true">
-                            <Card>
-                              <CardContent className="p-0">
-                                <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
-                                <div className="p-4 space-y-3">
-                                  <Skeleton className="h-6 w-3/4" />
-                                  <Skeleton className="h-4 w-1/2" />
-                                  <Skeleton className="h-4 w-full" />
-                                  <Skeleton className="h-10 w-full" />
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </article>
-                        </li>
-                    ))
-                ) : recommendedProducts.length > 0 ? (
-                    recommendedProducts.map((product) => (
-                        <article key={product.id} role="listitem">
-                          <ProductCard
-                              product={product}
-                              showCategory
-                              className="animate-fade-in"
-                          />
-                        </article>
-                    ))
-                ) : (
-                    <p className="text-center col-span-full text-muted-foreground">
-                      Momentan nu există preparate recomandate.
-                    </p>
-                )}
-              </ul>
+              {recommendedProducts.length > 0 || loadingRecs ? (
+                  <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" aria-label="Preparate recomandate">
+                    {loadingRecs
+                        ? Array.from({ length: 6 }).map((_, i) => (
+                            <li key={i} aria-busy="true">
+                              <Card>
+                                <CardContent className="p-0">
+                                  <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+                                  <div className="p-4 space-y-3">
+                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-4 w-1/2" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-10 w-full" />
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </li>
+                        ))
+                        : recommendedProducts.map((product) => (
+                            <li key={product.id}>
+                              <ProductCard
+                                  product={product}
+                                  showCategory
+                                  className="animate-fade-in"
+                              />
+                            </li>
+                        ))}
+                  </ul>
+              ) : (
+                  <p className="text-center col-span-full text-muted-foreground">
+                    Momentan nu există preparate recomandate.
+                  </p>
+              )}
 
               {recommendedProducts.length > 0 && (
                   <div className="text-center">
