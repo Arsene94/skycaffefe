@@ -8,8 +8,8 @@ export function LocalBusinessStructuredData() {
         "alternateName": "Sky Caffe Năvodari",
         "description": seoConfig.defaultDescription,
         "image": [
-            `${seoConfig.siteUrl}/hero.jpeg`,
-            `${seoConfig.siteUrl}/og-image.jpg`
+            `${seoConfig.siteUrl}/hero.webp`,
+            `${seoConfig.siteUrl}/og-image.webp`
         ],
         "address": {
             "@type": "PostalAddress",

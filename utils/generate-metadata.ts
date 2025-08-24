@@ -15,7 +15,7 @@ export function generatePageMetadata({
                                          description,
                                          keywords = [],
                                          path = '',
-                                         image = '/og-image.jpg',
+                                         image = '/og-image.webp',
                                          noindex = false
                                      }: PageMetadataProps = {}): Metadata {
     const fullTitle = title ? `${title} | ${seoConfig.siteName}` : seoConfig.defaultTitle

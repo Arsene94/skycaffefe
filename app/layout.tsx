@@ -84,8 +84,8 @@ export default function RootLayout({
                         "alternateName": "Sky Caffe Năvodari",
                         "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
                         "image": [
-                            "https://skycaffe.ro/hero.jpeg",
-                            "https://skycaffe.ro/og-image.jpg"
+                            "https://skycaffe.ro/hero.webp",
+                            "https://skycaffe.ro/og-image.webp"
                         ],
                         "address": {
                             "@type": "PostalAddress",

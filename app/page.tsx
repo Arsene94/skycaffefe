@@ -144,6 +144,7 @@ export default function HomePage() {
               <Image
                   src="/hero.webp"
                   alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
+                  fill
                   sizes="100vw"
                   className="object-cover"
                   priority

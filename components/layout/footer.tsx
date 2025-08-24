@@ -184,7 +184,7 @@ export function Footer() {
                 alternateName: 'Sky Caffe Năvodari',
                 url: 'https://skycaffe.ro',
                 logo: 'https://skycaffe.ro/logo.png',
-                image: 'https://skycaffe.ro/hero.jpeg',
+                image: 'https://skycaffe.ro/hero.webp',
                 description: 'Bistro premium pe rooftop cu livrare rapidă în Năvodari',
                 address: {
                   '@type': 'PostalAddress',
