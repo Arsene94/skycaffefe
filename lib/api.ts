@@ -190,7 +190,7 @@ class ApiClient {
         category_id?: string | number | undefined;
         page?: number;
         pageSize?: number;
-        client_page: string;
+        client_page?: string;
     }) {
         const qs = params ? `?${new URLSearchParams(params as any)}` : '';
         return this.request<any>(`/products${qs}`, {

@@ -153,6 +153,7 @@ export default function HomePage() {
                 alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
                 fill
                 priority
+                fetchPriority="high"
                 sizes="100vw"
                 quality={60}
                 placeholder="blur"
