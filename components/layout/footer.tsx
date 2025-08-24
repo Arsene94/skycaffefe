@@ -1,97 +1,228 @@
 import Link from 'next/link';
-import { MapPin, Phone, Clock, Instagram, Facebook } from 'lucide-react';
+import { MapPin, Phone, Clock, Instagram, Facebook, Mail } from 'lucide-react';
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link 
-              href="/" 
-              className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] bg-clip-text text-transparent"
-            >
-              Sky Caffe
-            </Link>
-            <p className="mt-2 text-muted-foreground max-w-md">
-              Sky Caffe — bistro la înălțime, cu livrare rapidă în Năvodari. 
-              Experiență culinară premium pe rooftop-ul din centrul orașului.
-            </p>
-            <div className="flex space-x-4 mt-4">
-              <Link 
-                href="#" 
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Instagram"
+      <footer className="bg-card border-t border-border" role="contentinfo">
+        <div className="container mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Brand Section */}
+            <div className="lg:col-span-2">
+              <Link
+                  href="/"
+                  className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))] bg-clip-text text-transparent focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm"
+                  aria-label="Sky Caffe - Acasă"
               >
-                <Instagram className="w-5 h-5" />
+                Sky Caffe
               </Link>
-              <Link 
-                href="#" 
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
+              <p className="mt-2 text-muted-foreground max-w-md">
+                Sky Caffe — bistro la înălțime, cu livrare rapidă în Năvodari.
+                Experiență culinară premium pe rooftop-ul din centrul orașului.
+              </p>
 
-          {/* Contact Info */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Contact</h3>
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-start space-x-2">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Rooftop, etaj 4<br />Centrul Năvodari</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 flex-shrink-0" />
-                <span>0751 123 456</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 flex-shrink-0" />
-                <span>L–D: 10:00–22:30</span>
+              {/* Social Media Links */}
+              <div className="flex space-x-4 mt-4" role="list" aria-label="Rețele sociale">
+                <Link
+                    href="https://instagram.com/skycaffe"
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
+                    aria-label="Urmărește-ne pe Instagram"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                  <Instagram className="w-5 h-5" />
+                </Link>
+                <Link
+                    href="https://facebook.com/skycaffe"
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
+                    aria-label="Urmărește-ne pe Facebook"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                  <Facebook className="w-5 h-5" />
+                </Link>
               </div>
             </div>
+
+            {/* Contact Information */}
+            <div>
+              <h3 className="font-semibold text-foreground mb-4">Contact</h3>
+              <address className="not-italic">
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <div className="flex items-start space-x-2">
+                    <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                    <span>
+                    Rooftop, etaj 4<br />
+                    Centrul Năvodari<br />
+                    Năvodari, România
+                  </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                    <a
+                        href="tel:+40751123456"
+                        className="hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm"
+                        aria-label="Sună la Sky Caffe"
+                    >
+                      +40 751 123 456
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Mail className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                    <a
+                        href="mailto:contact@skycaffe.ro"
+                        className="hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm"
+                        aria-label="Trimite email la Sky Caffe"
+                    >
+                      contact@skycaffe.ro
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+                    <span>
+                    Luni–Duminică: <time dateTime="10:00">10:00</time>–<time dateTime="22:30">22:30</time>
+                  </span>
+                  </div>
+                </div>
+              </address>
+            </div>
+
+            {/* Quick Navigation Links */}
+            <nav aria-label="Navigare footer">
+              <h3 className="font-semibold text-foreground mb-4">Navigare</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link
+                      href="/meniu"
+                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                      aria-describedby="menu-footer-desc"
+                  >
+                    Meniul nostru
+                  </Link>
+                  <span id="menu-footer-desc" className="sr-only">Accesează meniul complet cu preparate și prețuri</span>
+                </li>
+                <li>
+                  <Link
+                      href="/despre"
+                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                      aria-describedby="about-footer-desc"
+                  >
+                    Despre noi
+                  </Link>
+                  <span id="about-footer-desc" className="sr-only">Află mai multe despre Sky Caffe și echipa noastră</span>
+                </li>
+                <li>
+                  <Link
+                      href="/checkout"
+                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                      aria-describedby="checkout-footer-desc"
+                  >
+                    Comandă online
+                  </Link>
+                  <span id="checkout-footer-desc" className="sr-only">Plasează o comandă online pentru livrare sau ridicare</span>
+                </li>
+                <li>
+                  <Link
+                      href="/contact"
+                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                      aria-describedby="contact-footer-desc"
+                  >
+                    Contact
+                  </Link>
+                  <span id="contact-footer-desc" className="sr-only">Informații de contact și locație</span>
+                </li>
+                <li>
+                  <Link
+                      href="/termeni-si-conditii"
+                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                      aria-describedby="terms-footer-desc"
+                  >
+                    Termeni și condiții
+                  </Link>
+                  <span id="terms-footer-desc" className="sr-only">Consultă termenii și condițiile de utilizare</span>
+                </li>
+                <li>
+                  <Link
+                      href="/politica-de-confidentialitate"
+                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                      aria-describedby="privacy-footer-desc"
+                  >
+                    Politica de confidențialitate
+                  </Link>
+                  <span id="privacy-footer-desc" className="sr-only">Consultă politica de confidențialitate</span>
+                </li>
+              </ul>
+            </nav>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-4">Navigare</h3>
-            <div className="space-y-2 text-sm">
-              <Link 
-                href="/meniu" 
-                className="block text-muted-foreground hover:text-primary transition-colors"
-              >
-                Meniul nostru
-              </Link>
-              <Link 
-                href="/despre" 
-                className="block text-muted-foreground hover:text-primary transition-colors"
-              >
-                Despre noi
-              </Link>
-              <Link 
-                href="/checkout" 
-                className="block text-muted-foreground hover:text-primary transition-colors"
-              >
-                Comandă online
-              </Link>
-              <Link 
-                href="/admin/login" 
-                className="block text-muted-foreground hover:text-primary transition-colors"
-              >
-                Admin
-              </Link>
+          {/* Copyright and Legal */}
+          <div className="border-t border-border mt-8 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground gap-4">
+              <div className="text-center md:text-left">
+                <p>&copy; {currentYear} Sky Caffe. Toate drepturile rezervate.</p>
+                <p className="mt-1">Bistro la înălțime în Năvodari</p>
+              </div>
+
+              {/* Additional Legal Links */}
+              <div className="flex flex-wrap justify-center md:justify-end gap-4 text-xs">
+                <Link
+                    href="/gdpr"
+                    className="hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm"
+                >
+                  GDPR
+                </Link>
+                <Link
+                    href="/cookies"
+                    className="hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm"
+                >
+                  Cookie-uri
+                </Link>
+                <Link
+                    href="/sitemap.xml"
+                    className="hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm"
+                    target="_blank"
+                    rel="noopener"
+                >
+                  Sitemap
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Sky Caffe. Toate drepturile rezervate.</p>
-          <p className="mt-1">Bistro la înălțime în Năvodari</p>
-        </div>
-      </div>
-    </footer>
+        {/* Structured Data for Organization */}
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": "Sky Caffe",
+                "alternateName": "Sky Caffe Năvodari",
+                "url": "https://skycaffe.ro",
+                "logo": "https://skycaffe.ro/logo.png",
+                "image": "https://skycaffe.ro/hero.jpeg",
+                "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": "Centrul Năvodari, Rooftop etaj 4",
+                  "addressLocality": "Năvodari",
+                  "addressCountry": "RO"
+                },
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+40751123456",
+                  "contactType": "customer service",
+                  "availableLanguage": ["Romanian"]
+                },
+                "sameAs": [
+                  "https://facebook.com/skycaffe",
+                  "https://instagram.com/skycaffe"
+                ]
+              })
+            }}
+        />
+      </footer>
   );
 }

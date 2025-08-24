@@ -216,7 +216,7 @@ function computeHintForOffer(cartItems: CartItem[], offer: OfferDTO): OfferHint 
   }
 
   // altfel, ajutăm clientul cum să „atingă” oferta
-  if (offer.type === 'PERCENT' || offer.type === 'FIXED') {
+  if (qty !== 0 && (offer.type === 'PERCENT' || offer.type === 'FIXED')) {
     if (offer.conditions?.minItems != null && qty < offer.conditions.minItems) {
       const missing = offer.conditions.minItems - qty;
       return {
@@ -226,7 +226,7 @@ function computeHintForOffer(cartItems: CartItem[], offer: OfferDTO): OfferHint 
         message: `Mai adaugă ${missing} ${pluralProd(missing)}${suggested ? ` (ex: ${suggested.name})` : ''} în ${scopeLabel(offer)} pentru a beneficia de reducere.`,
       };
     }
-    if (offer.conditions?.minSubtotal != null && subtotal < offer.conditions.minSubtotal) {
+    if (qty !== 0 && (offer.conditions?.minSubtotal != null && subtotal < offer.conditions.minSubtotal)) {
       const missing = offer.conditions.minSubtotal - subtotal;
       return {
         code: offer.code,
