@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import apiClient from '@/lib/api';
 import { formatPrice } from '@/lib/format';
+import {Eye, EyeOff} from "lucide-react";
 
 type OrderLite = {
     id: string | number;
@@ -31,8 +32,10 @@ export default function AccountPage() {
     const [saving, setSaving] = useState(false);
     const [name, setName] = useState(user?.name || '');
     const [phone, setPhone] = useState((user as any)?.phone || '');
+    const [password, setPassword] = useState('');
     const [orders, setOrders] = useState<OrderLite[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -75,7 +78,7 @@ export default function AccountPage() {
     const handleSave = async () => {
         try {
             setSaving(true);
-            const payload = { name: name.trim(), phone: phone.trim() || null };
+            const payload = { name: name.trim(), phone: phone.trim() || null, password: password || undefined };
             const updated = await apiClient.updateProfile(payload);
             updateUser({ name: updated?.user?.name ?? payload.name, phone: updated?.user?.phone ?? payload.phone });
             toast.success('Profil actualizat');
@@ -122,6 +125,34 @@ export default function AccountPage() {
                         <div className="space-y-2">
                             <Label>Telefon</Label>
                             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07xx xxx xxx" inputMode="tel" />
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="password">Parola</Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Introdu parola"
+                                    autoComplete="current-password"
+                                    className={`pr-10`}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6"
+                                    onClick={() => setShowPassword((s) => !s)}
+                                    aria-label={showPassword ? 'Ascunde parola' : 'Afișează parola'}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                         <div className="md:col-span-2">
                             <Button onClick={handleSave} disabled={!canSave}>

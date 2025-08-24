@@ -126,7 +126,7 @@ class ApiClient {
         return this.request<any>('/users/profile');
     }
 
-    async updateProfile(payload: Partial<{ name: string; phone: string }>) {
+    async updateProfile(payload: Partial<{ name: string; phone: string; password?: string }>) {
         return this.request<any>('/users/profile', {
             method: 'PATCH',
             body: JSON.stringify(payload),
