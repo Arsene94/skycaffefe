@@ -453,7 +453,6 @@ function OrderEditDialog({
                            onOpenChange,
                            orderId,
                            onSaved,
-                           getStatusClass,
                            getStatusLabel,
                          }: {
   open: boolean;
@@ -588,7 +587,7 @@ function OrderEditDialog({
     isActiveNow?: boolean;
   };
 
-  const eligibleItemsForOffer = (cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO) => {
+  const eligibleItemsForOffer = useCallback((cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO) => {
     const isEligible = (ci: { product: ProductLite; quantity: number }) => {
       switch (offer.application_type) {
         case 'cart':
@@ -610,9 +609,9 @@ function OrderEditDialog({
     eligibleCartItems.forEach(i => { for (let k = 0; k < i.quantity; k++) unitPrices.push(i.product.price); });
     unitPrices.sort((a, b) => a - b);
     return { eligibleCartItems, qty, subtotal, unitPrices };
-  };
+  }, []);
 
-  const calcOfferDiscount = (cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO): number => {
+  const calcOfferDiscount = useCallback((cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO): number => {
     const { qty, subtotal, unitPrices } = eligibleItemsForOffer(cartItems, offer);
     if (offer.conditions?.minSubtotal != null && subtotal < offer.conditions.minSubtotal) return 0;
     if (offer.conditions?.minItems != null && qty < offer.conditions.minItems) return 0;
@@ -636,9 +635,9 @@ function OrderEditDialog({
       default:
         return 0;
     }
-  };
+  }, [eligibleItemsForOffer]);
 
-  const calculateDiscount = (cartItems: { product: ProductLite; quantity: number }[], offersRaw: any[]) => {
+  const calculateDiscount = useCallback((cartItems: { product: ProductLite; quantity: number }[], offersRaw: any[]) => {
     const parsed: OfferDTO[] = (offersRaw ?? []).map((o: any) => ({
       id: Number(o.id),
       code: String(o.code ?? ''),
@@ -667,10 +666,10 @@ function OrderEditDialog({
       }
     }
     return totalDiscount;
-  };
+  }, [calcOfferDiscount]);
 
   const subtotal = useMemo(() => items.reduce((s, i) => s + i.product.price * i.quantity, 0), [items]);
-  const discount = useMemo(() => calculateDiscount(items, offers), [items, offers]);
+  const discount = useMemo(() => calculateDiscount(items, offers), [calculateDiscount, items, offers]);
   const total = Math.max(0, subtotal - discount + (deliveryType === 'delivery' ? deliveryFee : 0));
 
   const save = async () => {
