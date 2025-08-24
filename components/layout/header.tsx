@@ -117,74 +117,76 @@ export function Header() {
               </Button>
 
               {/* User icon + dropdown (desktop) */}
-              {mounted && !loading && (
-                  <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                          variant="ghost"
-                          size="icon"
-                          className="w-9 h-9"
-                          onMouseEnter={openNow}
-                          onMouseLeave={closeSoon}
-                          aria-label="Meniu utilizator"
-                      >
-                        <UserIcon className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-
-                    <DropdownMenuContent
-                        align="center"
-                        sideOffset={-5}
-                        onMouseEnter={openNow}
-                        onMouseLeave={closeSoon}
-                        className="w-56"
+              {mounted && !loading ? (
+                <DropdownMenu open={userMenuOpen} onOpenChange={setUserMenuOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-9 h-9"
+                      onMouseEnter={openNow}
+                      onMouseLeave={closeSoon}
+                      aria-label="Meniu utilizator"
                     >
-                      {user ? (
-                          <>
-                            <DropdownMenuLabel className="truncate">
-                              {user.name || user.email}
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <Link href="/account">
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                Contul meu
-                              </DropdownMenuItem>
-                            </Link>
-                            <Link href="/account/orders">
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                Comenzile mele
-                              </DropdownMenuItem>
-                            </Link>
-                            <Link href="/account/addresses">
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                Adresele mele
-                              </DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => logout()}
-                            >
-                              <LogOut className="w-4 h-4 mr-2" />
-                              Delogare
-                            </DropdownMenuItem>
-                          </>
-                      ) : (
-                          <>
-                            <Link href="/auth/login">
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                Autentificare
-                              </DropdownMenuItem>
-                            </Link>
-                            <Link href="/auth/register">
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                Înregistrare
-                              </DropdownMenuItem>
-                            </Link>
-                          </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      <UserIcon className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    align="center"
+                    sideOffset={-5}
+                    onMouseEnter={openNow}
+                    onMouseLeave={closeSoon}
+                    className="w-56"
+                  >
+                    {user ? (
+                      <>
+                        <DropdownMenuLabel className="truncate">
+                          {user.name || user.email}
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <Link href="/account">
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Contul meu
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/account/orders">
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Comenzile mele
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/account/addresses">
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Adresele mele
+                          </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => logout()}
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Delogare
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <Link href="/auth/login">
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Autentificare
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/auth/register">
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Înregistrare
+                          </DropdownMenuItem>
+                        </Link>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="w-9 h-9" aria-hidden="true" />
               )}
 
               {/* Cart */}
