@@ -39,6 +39,7 @@ import { useEffect, useState } from "react";
 import { Category, Product } from "@/types";
 import apiClient from "@/lib/api";
 import { toast } from "sonner";
+import RelativeTime from "@/components/layout/time-ago";
 
 const categoryIcons = {
   pizza: Pizza, utensils: UtensilsCrossed, chefhat: ChefHat, leaf: Leaf, cake: Cake,
@@ -135,7 +136,7 @@ export default function HomePage() {
         <main role="main">
           {/* Hero Section - Enhanced for SEO and accessibility */}
           <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center overflow-hidden">
-            <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh] overflow-hidden">
+            <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh]  aspect-[16/9] overflow-hidden">
               <Image
                   src="/hero.jpeg"
                   alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
@@ -352,7 +353,7 @@ export default function HomePage() {
 
                         <div className="border-t border-border pt-4">
                           <p className="font-semibold">{testimonial.name}</p>
-                          <p className="text-sm text-muted-foreground">{testimonial.date}</p>
+                          <p className="text-sm text-muted-foreground"><RelativeTime weeksAgo={index + 1} label={testimonial.date} /></p>
                         </div>
                       </CardContent>
                     </Card>
