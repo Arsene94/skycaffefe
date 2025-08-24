@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { Toaster } from 'sonner';
 import { AuthProvider } from "@/contexts/auth-context";
-import Script from 'next/script';
+import Script from "next/script"
 import {generatePageMetadata} from "@/utils/generate-metadata";
 
 const inter = Inter({
@@ -66,69 +66,6 @@ export default function RootLayout({
 
         {/* Performance hints */}
         <link rel="preload" href="/hero.jpeg" as="image" type="image/jpeg" fetchPriority="high" />
-
-        {/* Structured data for local business */}
-        <Script
-            id="structured-data"
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Restaurant",
-                "name": "Sky Caffe",
-                "alternateName": "Sky Caffe Năvodari",
-                "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
-                "image": [
-                  "https://skycaffe.ro/hero.jpeg",
-                  "https://skycaffe.ro/og-image.jpg"
-                ],
-                "address": {
-                  "@type": "PostalAddress",
-                  "streetAddress": "Centrul Năvodari, Rooftop etaj 4",
-                  "addressLocality": "Năvodari",
-                  "addressCountry": "RO"
-                },
-                "geo": {
-                  "@type": "GeoCoordinates",
-                  "latitude": "44.3167",
-                  "longitude": "28.6167"
-                },
-                "url": "https://skycaffe.ro",
-                "telephone": "+40751123456",
-                "servesCuisine": ["Romanian", "Italian", "International"],
-                "priceRange": "$$",
-                "openingHours": "Mo-Su 10:00-22:30",
-                "hasMenu": "https://skycaffe.ro/meniu",
-                "acceptsReservations": true,
-                "deliveryService": {
-                  "@type": "DeliveryService",
-                  "serviceArea": {
-                    "@type": "City",
-                    "name": "Năvodari"
-                  }
-                },
-                "aggregateRating": {
-                  "@type": "AggregateRating",
-                  "ratingValue": "4.8",
-                  "reviewCount": "127"
-                },
-                "review": [
-                  {
-                    "@type": "Review",
-                    "reviewRating": {
-                      "@type": "Rating",
-                      "ratingValue": "5"
-                    },
-                    "author": {
-                      "@type": "Person",
-                      "name": "Maria Popescu"
-                    },
-                    "reviewBody": "Mâncarea este delicioasă și vederea de pe rooftop este spectaculoasă! Livrarea a fost foarte rapidă."
-                  }
-                ]
-              })
-            }}
-        />
       </head>
       <body className={inter.className}>
       <AuthProvider>
@@ -149,6 +86,69 @@ export default function RootLayout({
           <div id="main-content">
             {children}
           </div>
+
+            {/* Structured data for local business */}
+            <Script
+                id="structured-data"
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Restaurant",
+                        "name": "Sky Caffe",
+                        "alternateName": "Sky Caffe Năvodari",
+                        "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
+                        "image": [
+                            "https://skycaffe.ro/hero.jpeg",
+                            "https://skycaffe.ro/og-image.jpg"
+                        ],
+                        "address": {
+                            "@type": "PostalAddress",
+                            "streetAddress": "Centrul Năvodari, Rooftop etaj 4",
+                            "addressLocality": "Năvodari",
+                            "addressCountry": "RO"
+                        },
+                        "geo": {
+                            "@type": "GeoCoordinates",
+                            "latitude": "44.3167",
+                            "longitude": "28.6167"
+                        },
+                        "url": "https://skycaffe.ro",
+                        "telephone": "+40751123456",
+                        "servesCuisine": ["Romanian", "Italian", "International"],
+                        "priceRange": "$$",
+                        "openingHours": "Mo-Su 10:00-22:30",
+                        "hasMenu": "https://skycaffe.ro/meniu",
+                        "acceptsReservations": true,
+                        "deliveryService": {
+                            "@type": "DeliveryService",
+                            "serviceArea": {
+                                "@type": "City",
+                                "name": "Năvodari"
+                            }
+                        },
+                        "aggregateRating": {
+                            "@type": "AggregateRating",
+                            "ratingValue": "4.8",
+                            "reviewCount": "127"
+                        },
+                        "review": [
+                            {
+                                "@type": "Review",
+                                "reviewRating": {
+                                    "@type": "Rating",
+                                    "ratingValue": "5"
+                                },
+                                "author": {
+                                    "@type": "Person",
+                                    "name": "Maria Popescu"
+                                },
+                                "reviewBody": "Mâncarea este delicioasă și vederea de pe rooftop este spectaculoasă! Livrarea a fost foarte rapidă."
+                            }
+                        ]
+                    })
+                }}
+            />
 
           <Toaster
               position="top-center"

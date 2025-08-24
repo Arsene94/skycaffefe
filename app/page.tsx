@@ -321,49 +321,41 @@ export default function HomePage() {
               </section>
           )}
 
-          {/* Testimonials - Enhanced with structured data */}
-          <section className="py-16 bg-muted/20" aria-labelledby="testimonials-heading">
+          {/* Testimonials */}
+          <section className="py-16 bg-muted/20">
             <div className="container mx-auto px-4">
-              <header className="text-center mb-12">
-                <h2 id="testimonials-heading" className="text-3xl lg:text-4xl font-bold mb-4">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl lg:text-4xl font-bold mb-4">
                   Ce spun <span className="text-[hsl(var(--primary))]">clienții</span>
                 </h2>
                 <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                   Experiențele și părerile celor care au savurat preparatele noastre
                 </p>
-              </header>
+              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" role="list">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {testimonials.map((testimonial, index) => (
-                    <article key={index} className="animate-fade-in" role="listitem">
-                      <Card className="h-full">
-                        <CardContent className="p-6">
-                          <div
-                              className="flex items-center space-x-1 mb-4"
-                              role="img"
-                              aria-label={`Evaluare ${testimonial.rating} din 5 stele`}
-                          >
-                            {[...Array(testimonial.rating)].map((_, i) => (
-                                <Star key={i} className="w-4 h-4 text-[hsl(var(--accent))] fill-current" aria-hidden="true" />
-                            ))}
-                          </div>
+                    <Card key={index} className="animate-fade-in">
+                      <CardContent className="p-6">
+                        <div className="flex items-center space-x-1 mb-4">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                              <Star key={i} className="w-4 h-4 text-[hsl(var(--accent))] fill-current" />
+                          ))}
+                        </div>
 
-                          <div className="relative mb-6">
-                            <Quote className="absolute -top-2 -left-2 w-8 h-8 text-muted-foreground/20" aria-hidden="true" />
-                            <blockquote className="text-muted-foreground italic pl-6">
-                              &quot;{testimonial.text}&quot;
-                            </blockquote>
-                          </div>
+                        <div className="relative mb-6">
+                          <Quote className="absolute -top-2 -left-2 w-8 h-8 text-muted-foreground/20" />
+                          <p className="text-muted-foreground italic pl-6">
+                            &quot;{testimonial.text}&quot;
+                          </p>
+                        </div>
 
-                          <footer className="border-t border-border pt-4">
-                            <cite className="font-semibold not-italic">{testimonial.name}</cite>
-                            <time className="block text-sm text-muted-foreground mt-1" dateTime={new Date(Date.now() - (index * 7 * 24 * 60 * 60 * 1000)).toISOString()}>
-                              {testimonial.date}
-                            </time>
-                          </footer>
-                        </CardContent>
-                      </Card>
-                    </article>
+                        <div className="border-t border-border pt-4">
+                          <p className="font-semibold">{testimonial.name}</p>
+                          <p className="text-sm text-muted-foreground">{testimonial.date}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                 ))}
               </div>
             </div>

@@ -1,5 +1,14 @@
+'use client';
+
 import Link from 'next/link';
-import { MapPin, Phone, Clock, Instagram, Facebook, Mail } from 'lucide-react';
+import {
+  MapPin,
+  Phone,
+  Clock,
+  Instagram,
+  Facebook,
+  Mail,
+} from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -23,7 +32,11 @@ export function Footer() {
               </p>
 
               {/* Social Media Links */}
-              <div className="flex space-x-4 mt-4" role="list" aria-label="Rețele sociale">
+              <div
+                  className="flex space-x-4 mt-4"
+                  role="list"
+                  aria-label="Rețele sociale"
+              >
                 <Link
                     href="https://instagram.com/skycaffe"
                     className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm p-1"
@@ -48,14 +61,21 @@ export function Footer() {
             {/* Contact Information */}
             <div>
               <h3 className="font-semibold text-foreground mb-4">Contact</h3>
-              <address className="not-italic">
+              <address
+                  className="not-italic"
+                  itemScope
+                  itemType="https://schema.org/PostalAddress"
+              >
                 <div className="space-y-3 text-sm text-muted-foreground">
                   <div className="flex items-start space-x-2">
                     <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
                     <span>
-                    Rooftop, etaj 4<br />
-                    Centrul Năvodari<br />
-                    Năvodari, România
+                    <span itemProp="streetAddress">Rooftop, etaj 4</span>
+                    <br />
+                    <span>Centrul Năvodari</span>
+                    <br />
+                    <span itemProp="addressLocality">Năvodari</span>,{' '}
+                      <span itemProp="addressCountry">România</span>
                   </span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -81,82 +101,45 @@ export function Footer() {
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                     <span>
-                    Luni–Duminică: <time dateTime="10:00">10:00</time>–<time dateTime="22:30">22:30</time>
+                    Luni–Duminică:{' '}
+                    <time dateTime="2025-08-24T10:00:00+03:00">10:00</time>–
+                    <time dateTime="2025-08-24T22:30:00+03:00">22:30</time>
                   </span>
                   </div>
                 </div>
               </address>
             </div>
 
-            {/* Quick Navigation Links */}
+            {/* Quick Navigation */}
             <nav aria-label="Navigare footer">
               <h3 className="font-semibold text-foreground mb-4">Navigare</h3>
               <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                      href="/meniu"
-                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
-                      aria-describedby="menu-footer-desc"
-                  >
-                    Meniul nostru
-                  </Link>
-                  <span id="menu-footer-desc" className="sr-only">Accesează meniul complet cu preparate și prețuri</span>
-                </li>
-                <li>
-                  <Link
-                      href="/despre"
-                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
-                      aria-describedby="about-footer-desc"
-                  >
-                    Despre noi
-                  </Link>
-                  <span id="about-footer-desc" className="sr-only">Află mai multe despre Sky Caffe și echipa noastră</span>
-                </li>
-                <li>
-                  <Link
-                      href="/checkout"
-                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
-                      aria-describedby="checkout-footer-desc"
-                  >
-                    Comandă online
-                  </Link>
-                  <span id="checkout-footer-desc" className="sr-only">Plasează o comandă online pentru livrare sau ridicare</span>
-                </li>
-                <li>
-                  <Link
-                      href="/contact"
-                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
-                      aria-describedby="contact-footer-desc"
-                  >
-                    Contact
-                  </Link>
-                  <span id="contact-footer-desc" className="sr-only">Informații de contact și locație</span>
-                </li>
-                <li>
-                  <Link
-                      href="/termeni-si-conditii"
-                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
-                      aria-describedby="terms-footer-desc"
-                  >
-                    Termeni și condiții
-                  </Link>
-                  <span id="terms-footer-desc" className="sr-only">Consultă termenii și condițiile de utilizare</span>
-                </li>
-                <li>
-                  <Link
-                      href="/politica-de-confidentialitate"
-                      className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
-                      aria-describedby="privacy-footer-desc"
-                  >
-                    Politica de confidențialitate
-                  </Link>
-                  <span id="privacy-footer-desc" className="sr-only">Consultă politica de confidențialitate</span>
-                </li>
+                {[
+                  { href: '/meniu', label: 'Meniul nostru', desc: 'Accesează meniul complet cu preparate și prețuri' },
+                  { href: '/despre', label: 'Despre noi', desc: 'Află mai multe despre Sky Caffe și echipa noastră' },
+                  { href: '/checkout', label: 'Comandă online', desc: 'Plasează o comandă online pentru livrare sau ridicare' },
+                  { href: '/contact', label: 'Contact', desc: 'Informații de contact și locație' },
+                  { href: '/termeni-si-conditii', label: 'Termeni și condiții', desc: 'Consultă termenii și condițiile de utilizare' },
+                  { href: '/politica-de-confidentialitate', label: 'Politica de confidențialitate', desc: 'Consultă politica de confidențialitate' },
+                ].map(({ href, label, desc }, idx) => (
+                    <li key={idx}>
+                      <Link
+                          href={href}
+                          className="block text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 rounded-sm py-1"
+                          aria-describedby={`footer-desc-${idx}`}
+                      >
+                        {label}
+                      </Link>
+                      <span id={`footer-desc-${idx}`} className="sr-only">
+                    {desc}
+                  </span>
+                    </li>
+                ))}
               </ul>
             </nav>
           </div>
 
-          {/* Copyright and Legal */}
+          {/* Copyright */}
           <div className="border-t border-border mt-8 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground gap-4">
               <div className="text-center md:text-left">
@@ -164,7 +147,6 @@ export function Footer() {
                 <p className="mt-1">Bistro la înălțime în Năvodari</p>
               </div>
 
-              {/* Additional Legal Links */}
               <div className="flex flex-wrap justify-center md:justify-end gap-4 text-xs">
                 <Link
                     href="/gdpr"
@@ -191,36 +173,36 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Structured Data for Organization */}
+        {/* Structured Data */}
         <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Organization",
-                "name": "Sky Caffe",
-                "alternateName": "Sky Caffe Năvodari",
-                "url": "https://skycaffe.ro",
-                "logo": "https://skycaffe.ro/logo.png",
-                "image": "https://skycaffe.ro/hero.jpeg",
-                "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
-                "address": {
-                  "@type": "PostalAddress",
-                  "streetAddress": "Centrul Năvodari, Rooftop etaj 4",
-                  "addressLocality": "Năvodari",
-                  "addressCountry": "RO"
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: 'Sky Caffe',
+                alternateName: 'Sky Caffe Năvodari',
+                url: 'https://skycaffe.ro',
+                logo: 'https://skycaffe.ro/logo.png',
+                image: 'https://skycaffe.ro/hero.jpeg',
+                description: 'Bistro premium pe rooftop cu livrare rapidă în Năvodari',
+                address: {
+                  '@type': 'PostalAddress',
+                  streetAddress: 'Centrul Năvodari, Rooftop etaj 4',
+                  addressLocality: 'Năvodari',
+                  addressCountry: 'RO',
                 },
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+40751123456",
-                  "contactType": "customer service",
-                  "availableLanguage": ["Romanian"]
+                contactPoint: {
+                  '@type': 'ContactPoint',
+                  telephone: '+40751123456',
+                  contactType: 'customer service',
+                  availableLanguage: ['Romanian'],
                 },
-                "sameAs": [
-                  "https://facebook.com/skycaffe",
-                  "https://instagram.com/skycaffe"
-                ]
-              })
+                sameAs: [
+                  'https://facebook.com/skycaffe',
+                  'https://instagram.com/skycaffe',
+                ],
+              }),
             }}
         />
       </footer>
