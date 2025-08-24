@@ -41,6 +41,7 @@ import apiClient from "@/lib/api";
 import { toast } from "sonner";
 import RelativeTime from "@/components/layout/time-ago";
 import { Skeleton } from "@/components/ui/skeleton";
+import heroImage from '@/public/hero.webp';
 
 const categoryIcons = {
   pizza: Pizza, utensils: UtensilsCrossed, chefhat: ChefHat, leaf: Leaf, cake: Cake,
@@ -145,16 +146,13 @@ export default function HomePage() {
           <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center">
             <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh]  aspect-[16/9] overflow-hidden">
               <Image
-                  src="/hero.webp"
+                  src={heroImage}
                   alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
                   fill
                   sizes="(max-width: 768px) 100vw, 1000px"
                   className="object-cover"
                   priority
-                  fetchPriority="high"
                   quality={85}
-                  placeholder="blur"
-                  blurDataURL="data:image/webp;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGBobHB0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyovBd2FgvWp8/sVoLakHWp8/sVoLakHWp8/sVoLaktLvqAFNOsHu5vIk9LZDHqbmg=="
               />
               <div
                   className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--hero)/0.65)_0%,hsl(var(--hero-contrast)/0.65)_100%)]"
