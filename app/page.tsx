@@ -142,7 +142,7 @@ export default function HomePage() {
 
         <main role="main">
           {/* Hero Section - Enhanced for SEO and accessibility */}
-          <section className="relative h-[70vh] lg:h-[80vh]">
+          <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center">
             <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh]  aspect-[16/9] overflow-hidden">
               <Image
                   src="/hero.webp"
