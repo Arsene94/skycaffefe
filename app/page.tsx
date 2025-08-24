@@ -144,22 +144,22 @@ export default function HomePage() {
         <main role="main">
           {/* Hero Section - Enhanced for SEO and accessibility */}
           <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center">
-            <div className="absolute inset-0 w-full h-[70vh] lg:h-[80vh]  aspect-[16/9] overflow-hidden">
               <Image
                   src={heroImage}
                   alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
                   fill
-                  sizes="(max-width: 768px) 100vw, 1000px"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                   className="object-cover"
                   priority
                   quality={85}
+                  placeholder="blur"
+                  blurDataURL="data:image/webp;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGBobHB0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyovBd2FgvWp8/sVoLakHWp8/sVoLakHWp8/sVoLaktLvqAFNOsHu5vIk9LZDHqbmg=="
               />
               <div
                   className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--hero)/0.65)_0%,hsl(var(--hero-contrast)/0.65)_100%)]"
                   role="presentation"
                   aria-hidden="true"
               />
-            </div>
 
             <div className="relative z-10 text-center text-white px-4 max-w-4xl">
               <div className="animate-fade-in">
