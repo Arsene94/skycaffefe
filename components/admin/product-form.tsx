@@ -352,6 +352,7 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
         stock_type: normalizedStockType,
         stock_quantity: normalizedQuantity,
         nutritional_values: (data.nutritional_values || '').trim(),
+        ingredients: (data.ingredients || '').trim() || null,
 
         // Allergens
         allergens: data.allergens || [],

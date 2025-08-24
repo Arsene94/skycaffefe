@@ -659,6 +659,31 @@ class ApiClient {
         });
     }
 
+    async getAdminSettings() {
+        return this.request<any>('/admin/settings', { method: 'GET', credentials: 'include' });
+    }
+
+    async updateAdminSettings(payload: Partial<{
+        business_name: string;
+        site_email: string | null;
+        support_phone: string | null;
+        notify_whatsapp_numbers: string[];
+        notify_on_new_order: boolean;
+        notify_on_order_update: boolean; // 🆕
+        order_auto_confirm: boolean;
+        accept_cash: boolean;
+        accept_card: boolean;
+        pickup_address: string | null;
+        timezone: string;
+        currency: string;
+    }>) {
+        return this.request<any>('/admin/settings', {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+            credentials: 'include',
+        });
+    }
+
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

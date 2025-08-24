@@ -15,7 +15,7 @@ import {
   MapPin,
   BringToFront,
   QrCode,
-  X,
+  X, Settings,
 } from 'lucide-react';
 import Can from './Can';
 import { useEffect } from 'react';
@@ -31,6 +31,7 @@ const navigation = [
   { name: 'Personal',     href: '/admin/personal',   icon: Users,          role: 'ADMIN'    },
   { name: 'Zone livrare', href: '/admin/livrari',    icon: MapPin,         role: 'MANAGER'  },
   { name: 'Cod QR',       href: '/admin/codqr',      icon: QrCode,         role: 'MANAGER'  },
+  { name: 'Setari',       href: '/admin/setari',      icon: Settings,         role: 'ADMIN'  },
 ];
 
 export function AdminSidebar({
