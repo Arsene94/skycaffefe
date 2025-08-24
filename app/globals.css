@@ -12,7 +12,7 @@
     --popover-foreground: 222 20% 12%;
 
     --primary: 150 90% 26%;
-    --primary-foreground: 0 0% 98%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 45 40% 92%;      /* crem deschis (chipuri, badge-uri) */
     --secondary-foreground: 222 20% 12%;
@@ -47,7 +47,7 @@
     --popover-foreground: 45 40% 92%;
 
     --primary: 150 85% 48%;       /* verde mai electric */
-    --primary-foreground: 225 18% 12%;
+    --primary-foreground: 0 0% 0%;
 
     --secondary: 225 15% 18%;
     --secondary-foreground: 45 40% 92%;

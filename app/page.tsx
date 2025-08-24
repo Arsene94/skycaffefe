@@ -371,44 +371,44 @@ export default function HomePage() {
           </section>
 
           {/* Testimonials */}
-          <section className="py-16 min-h-[40vh] bg-muted/20">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-                  Ce spun <span className="text-[hsl(var(--primary))]">clienții</span>
-                </h2>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                  Experiențele și părerile celor care au savurat preparatele noastre
-                </p>
-              </div>
+          {/*<section className="py-16 min-h-[40vh] bg-muted/20">*/}
+          {/*  <div className="container mx-auto px-4">*/}
+          {/*    <div className="text-center mb-12">*/}
+          {/*      <h2 className="text-3xl lg:text-4xl font-bold mb-4">*/}
+          {/*        Ce spun <span className="text-[hsl(var(--primary))]">clienții</span>*/}
+          {/*      </h2>*/}
+          {/*      <p className="text-muted-foreground text-lg max-w-2xl mx-auto">*/}
+          {/*        Experiențele și părerile celor care au savurat preparatele noastre*/}
+          {/*      </p>*/}
+          {/*    </div>*/}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {testimonials.map((testimonial, index) => (
-                    <Card key={index} className="animate-fade-in">
-                      <CardContent className="p-6">
-                        <div className="flex items-center space-x-1 mb-4">
-                          {[...Array(testimonial.rating)].map((_, i) => (
-                              <Star key={i} className="w-4 h-4 text-[hsl(var(--accent))] fill-current" />
-                          ))}
-                        </div>
+          {/*    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">*/}
+          {/*      {testimonials.map((testimonial, index) => (*/}
+          {/*          <Card key={index} className="animate-fade-in">*/}
+          {/*            <CardContent className="p-6">*/}
+          {/*              <div className="flex items-center space-x-1 mb-4">*/}
+          {/*                {[...Array(testimonial.rating)].map((_, i) => (*/}
+          {/*                    <Star key={i} className="w-4 h-4 text-[hsl(var(--accent))] fill-current" />*/}
+          {/*                ))}*/}
+          {/*              </div>*/}
 
-                        <div className="relative mb-6">
-                          <Quote className="absolute -top-2 -left-2 w-8 h-8 text-muted-foreground/20" />
-                          <p className="text-muted-foreground italic pl-6">
-                            &quot;{testimonial.text}&quot;
-                          </p>
-                        </div>
+          {/*              <div className="relative mb-6">*/}
+          {/*                <Quote className="absolute -top-2 -left-2 w-8 h-8 text-muted-foreground/20" />*/}
+          {/*                <p className="text-muted-foreground italic pl-6">*/}
+          {/*                  &quot;{testimonial.text}&quot;*/}
+          {/*                </p>*/}
+          {/*              </div>*/}
 
-                        <div className="border-t border-border pt-4">
-                          <p className="font-semibold">{testimonial.name}</p>
-                          <p className="text-sm text-muted-foreground"><RelativeTime weeksAgo={index + 1} label={testimonial.date} /></p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                ))}
-              </div>
-            </div>
-          </section>
+          {/*              <div className="border-t border-border pt-4">*/}
+          {/*                <p className="font-semibold">{testimonial.name}</p>*/}
+          {/*                <p className="text-sm text-muted-foreground"><RelativeTime weeksAgo={index + 1} label={testimonial.date} /></p>*/}
+          {/*              </div>*/}
+          {/*            </CardContent>*/}
+          {/*          </Card>*/}
+          {/*      ))}*/}
+          {/*    </div>*/}
+          {/*  </div>*/}
+          {/*</section>*/}
 
           {/* CTA Section - Enhanced accessibility */}
           <section className="py-16 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" aria-labelledby="cta-heading">
@@ -416,7 +416,7 @@ export default function HomePage() {
               <h2 id="cta-heading" className="text-3xl lg:text-4xl font-bold mb-4">
                 Pregătit să comandă?
               </h2>
-              <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+              <p className="text-xl mb-8 max-w-2xl mx-auto">
                 Livrare rapidă în Năvodari sau ridică comanda direct de pe rooftop-ul nostru
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center" role="group" aria-label="Opțiuni comandă">

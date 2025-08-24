@@ -44,6 +44,7 @@
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.15",
     "babel-plugin-react-compiler": "^19.1.0-rc.2",
+    "browserslist": "^4.25.3",
     "caniuse-lite": "^1.0.30001737",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -75,5 +76,11 @@
   },
   "devDependencies": {
     "critters": "^0.0.23"
-  }
+  },
+  "browserslist": [
+    "chrome >= 91",
+    "firefox >= 90",
+    "safari >= 15",
+    "edge >= 91"
+  ]
 }
