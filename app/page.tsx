@@ -40,6 +40,7 @@ import { Category, Product } from "@/types";
 import apiClient from "@/lib/api";
 import { toast } from "sonner";
 import RelativeTime from "@/components/layout/time-ago";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const categoryIcons = {
   pizza: Pizza, utensils: UtensilsCrossed, chefhat: ChefHat, leaf: Leaf, cake: Cake,
@@ -72,6 +73,7 @@ const testimonials = [
 export default function HomePage() {
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [popularCategories, setPopularCategories] = useState<Category[]>();
+  const [loadingRecs, setLoadingRecs] = useState(true);
 
   useEffect(() => {
     const fetchPopularCategories = async () => {
@@ -98,7 +100,7 @@ export default function HomePage() {
         }
 
         const settled = await Promise.allSettled(
-            categories.map((c) => apiClient.getActiveRecommendation({ category_id: c.id }))
+          categories.map((c) => apiClient.getActiveRecommendation({ category_id: c.id }))
         );
 
         const prods: Product[] = [];
@@ -122,6 +124,8 @@ export default function HomePage() {
         console.error(e);
         toast.error('Eroare la încărcarea produselor recomandate');
         setRecommendedProducts([]);
+      } finally {
+        setLoadingRecs(false);
       }
     };
 
@@ -281,46 +285,68 @@ export default function HomePage() {
           )}
 
           {/* Recommended Products */}
-          {recommendedProducts.length > 0 && (
-              <section className="py-16 min-h-[40vh] bg-muted/20" aria-labelledby="recommended-heading">
-                <div className="container mx-auto px-4">
-                  <header className="text-center mb-12">
-                    <div className="flex items-center justify-center space-x-2 mb-4">
-                      <Star className="w-6 h-6 text-[hsl(var(--accent))] fill-current" aria-hidden="true" />
-                      <h2 id="recommended-heading" className="text-3xl lg:text-4xl font-bold">
-                        Preparate <span className="text-[hsl(var(--accent))]">recomandate</span>
-                      </h2>
-                      <Star className="w-6 h-6 text-[hsl(var(--accent))] fill-current" aria-hidden="true" />
-                    </div>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                      Preparatele noastre cele mai apreciate, selectate special pentru tine
-                    </p>
-                  </header>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
-                    {recommendedProducts.map((product) => (
-                        <article key={product.id} role="listitem">
-                          <ProductCard
-                              product={product}
-                              showCategory
-                              className="animate-fade-in"
-                          />
-                        </article>
-                    ))}
-                  </div>
-
-                  <div className="text-center">
-                    <Button asChild size="lg" className="bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 hover:from-[hsl(var(--primary))]/90 hover:to-[hsl(var(--primary))]/70">
-                      <Link href="/meniu" aria-describedby="all-products-description">
-                        Vezi toate preparatele
-                        <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
-                      </Link>
-                    </Button>
-                    <span id="all-products-description" className="sr-only">Accesează meniul complet cu toate preparatele disponibile</span>
-                  </div>
+          <section className="py-16 min-h-[60vh] bg-muted/20" aria-labelledby="recommended-heading">
+            <div className="container mx-auto px-4">
+              <header className="text-center mb-12">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <Star className="w-6 h-6 text-[hsl(var(--accent))] fill-current" aria-hidden="true" />
+                  <h2 id="recommended-heading" className="text-3xl lg:text-4xl font-bold">
+                    Preparate <span className="text-[hsl(var(--accent))]">recomandate</span>
+                  </h2>
+                  <Star className="w-6 h-6 text-[hsl(var(--accent))] fill-current" aria-hidden="true" />
                 </div>
-              </section>
-          )}
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                  Preparatele noastre cele mai apreciate, selectate special pentru tine
+                </p>
+              </header>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
+                {loadingRecs ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <article key={i} role="listitem" aria-busy="true">
+                      <Card>
+                        <CardContent className="p-0">
+                          <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+                          <div className="p-4 space-y-3">
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </article>
+                  ))
+                ) : recommendedProducts.length > 0 ? (
+                  recommendedProducts.map((product) => (
+                    <article key={product.id} role="listitem">
+                      <ProductCard
+                        product={product}
+                        showCategory
+                        className="animate-fade-in"
+                      />
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-center col-span-full text-muted-foreground">
+                    Momentan nu există preparate recomandate.
+                  </p>
+                )}
+              </div>
+
+              {recommendedProducts.length > 0 && (
+                <div className="text-center">
+                  <Button asChild size="lg" className="bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 hover:from-[hsl(var(--primary))]/90 hover:to-[hsl(var(--primary))]/70">
+                    <Link href="/meniu" aria-describedby="all-products-description">
+                      Vezi toate preparatele
+                      <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                  <span id="all-products-description" className="sr-only">Accesează meniul complet cu toate preparatele disponibile</span>
+                </div>
+              )}
+            </div>
+          </section>
 
           {/* Testimonials */}
           <section className="py-16 bg-muted/20">

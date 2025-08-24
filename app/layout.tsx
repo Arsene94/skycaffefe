@@ -1,21 +1,10 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { Toaster } from 'sonner';
 import { AuthProvider } from "@/contexts/auth-context";
 import Script from "next/script"
 import {generatePageMetadata} from "@/utils/generate-metadata";
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
-  variable: "--font-inter",
-  adjustFontFallback: true,
-  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Arial", "sans-serif"],
-  weight: ["400", "500", "600", "700", "900"],
-})
 
 // Enhanced viewport configuration
 export const viewport: Viewport = {
@@ -51,12 +40,6 @@ export default function RootLayout({
       <html lang="ro" suppressHydrationWarning>
       <head>
         {/* Preconnect to external domains for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link
-              href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
-              rel="stylesheet"
-          />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
 
         {/* DNS prefetch for external resources */}
@@ -71,7 +54,7 @@ export default function RootLayout({
         {/* Performance hints */}
         <link rel="preload" href="/hero.jpeg" as="image" type="image/jpeg" fetchPriority="high" />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
       <AuthProvider>
         <ThemeProvider
             attribute="class"
