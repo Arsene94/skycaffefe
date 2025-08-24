@@ -282,7 +282,7 @@ export default function HomePage() {
 
           {/* Recommended Products */}
           {recommendedProducts.length > 0 && (
-              <section className="py-16" aria-labelledby="recommended-heading">
+              <section className="py-16 min-h-[40vh] bg-muted/20" aria-labelledby="recommended-heading">
                 <div className="container mx-auto px-4">
                   <header className="text-center mb-12">
                     <div className="flex items-center justify-center space-x-2 mb-4">
