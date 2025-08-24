@@ -285,7 +285,7 @@ export default function HomePage() {
           )}
 
           {/* Recommended Products */}
-          <section className="py-16 min-h-[40vh] bg-muted/20" aria-labelledby="recommended-heading">
+          <section className="py-16 min-h-[60vh] bg-muted/20" aria-labelledby="recommended-heading">
             <div className="container mx-auto px-4">
               <header className="text-center mb-12">
                 <div className="flex items-center justify-center space-x-2 mb-4">
@@ -302,36 +302,48 @@ export default function HomePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" role="list">
                 {loadingRecs ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-[350px] w-full rounded-lg" />
-                  ))
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <article key={i} role="listitem" aria-busy="true">
+                          <Card>
+                            <CardContent className="p-0">
+                              <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+                              <div className="p-4 space-y-3">
+                                <Skeleton className="h-6 w-3/4" />
+                                <Skeleton className="h-4 w-1/2" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </article>
+                    ))
                 ) : recommendedProducts.length > 0 ? (
-                  recommendedProducts.map((product) => (
-                    <article key={product.id} role="listitem">
-                      <ProductCard
-                        product={product}
-                        showCategory
-                        className="animate-fade-in"
-                      />
-                    </article>
-                  ))
+                    recommendedProducts.map((product) => (
+                        <article key={product.id} role="listitem">
+                          <ProductCard
+                              product={product}
+                              showCategory
+                              className="animate-fade-in"
+                          />
+                        </article>
+                    ))
                 ) : (
-                  <p className="text-center col-span-full text-muted-foreground">
-                    Momentan nu există preparate recomandate.
-                  </p>
+                    <p className="text-center col-span-full text-muted-foreground">
+                      Momentan nu există preparate recomandate.
+                    </p>
                 )}
               </div>
 
               {recommendedProducts.length > 0 && (
-                <div className="text-center">
-                  <Button asChild size="lg" className="bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 hover:from-[hsl(var(--primary))]/90 hover:to-[hsl(var(--primary))]/70">
-                    <Link href="/meniu" aria-describedby="all-products-description">
-                      Vezi toate preparatele
-                      <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                  <span id="all-products-description" className="sr-only">Accesează meniul complet cu toate preparatele disponibile</span>
-                </div>
+                  <div className="text-center">
+                    <Button asChild size="lg" className="bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]/80 hover:from-[hsl(var(--primary))]/90 hover:to-[hsl(var(--primary))]/70">
+                      <Link href="/meniu" aria-describedby="all-products-description">
+                        Vezi toate preparatele
+                        <ArrowRight className="ml-2 w-5 h-5" aria-hidden="true" />
+                      </Link>
+                    </Button>
+                    <span id="all-products-description" className="sr-only">Accesează meniul complet cu toate preparatele disponibile</span>
+                  </div>
               )}
             </div>
           </section>
