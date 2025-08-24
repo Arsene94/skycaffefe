@@ -190,6 +190,7 @@ class ApiClient {
         category_id?: string | number | undefined;
         page?: number;
         pageSize?: number;
+        client_page: string;
     }) {
         const qs = params ? `?${new URLSearchParams(params as any)}` : '';
         return this.request<any>(`/products${qs}`, {
@@ -250,7 +251,7 @@ class ApiClient {
     // ----------------
     // Categories
     // ----------------
-    async getCategories(params?: { search?: string; page?: number; pageSize?: number }) {
+    async getCategories(params?: { search?: string; page?: number; pageSize?: number; client_page?: string }) {
         const qs = params ? `?${new URLSearchParams(params as any)}` : '';
         return this.request<any>(`/categories${qs}`, {
             next: { revalidate: 0 },
@@ -261,13 +262,7 @@ class ApiClient {
     //     return this.request<any>(`/admin/categories/${id}`);
     // }
 
-    async createCategory(payload: {
-        name: string;
-        slug: string;
-        description?: string;
-        icon?: string;
-        order?: number;
-    }) {
+    async createCategory(payload: any) {
         return this.request<any>('/admin/categories', {
             method: 'POST',
             body: JSON.stringify(payload),
@@ -276,13 +271,7 @@ class ApiClient {
 
     async updateCategory(
         id: string | number,
-        payload: Partial<{
-            name: string;
-            slug: string;
-            description?: string | null;
-            icon?: string | null;
-            order?: number;
-        }>
+        payload: any
     ) {
         return this.request<any>(`/admin/categories/${id}`, {
             method: 'PATCH',

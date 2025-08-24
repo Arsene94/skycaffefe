@@ -46,6 +46,8 @@ const categorySchema = z.object({
   icon: z.string().min(1, 'Alegeți o iconiță'),
   order: z.number().min(1, 'Ordinea trebuie să fie pozitivă').max(100, 'Ordinea este prea mare'),
   is_popular: z.boolean().optional(),
+  show_delivery: z.boolean().optional(),
+  show_menu: z.boolean().optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -85,6 +87,8 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
       icon: category?.icon || '',
       order: category?.order || 1,
       is_popular: category?.is_popular || false,
+      show_delivery: category?.show_delivery ?? true,
+      show_menu: category?.show_menu ?? true,
     },
   });
 
@@ -219,6 +223,26 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
           />
           <p className="text-xs text-muted-foreground">Seteaza categorie populara (maxim 6)</p>
           {errors.is_popular && <p className="text-sm text-destructive">{errors.is_popular.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="show_delivery">Afiseaza in meniul de delivery</Label>
+          <Checkbox
+              id="show_delivery"
+              {...register('show_delivery')}
+              className={errors.show_delivery ? 'border-destructive' : ''}
+          />
+          {errors.show_delivery && <p className="text-sm text-destructive">{errors.show_delivery.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="show_menu">Afiseaza in meniul digital</Label>
+          <Checkbox
+              id="show_menu"
+              {...register('show_menu')}
+              className={errors.show_menu ? 'border-destructive' : ''}
+          />
+          {errors.show_menu && <p className="text-sm text-destructive">{errors.show_menu.message}</p>}
         </div>
 
         <div className="flex justify-end space-x-4 pt-4 border-t">

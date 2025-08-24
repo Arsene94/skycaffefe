@@ -47,8 +47,8 @@ function MenuPageContent() {
     const fetchAll = async () => {
       try {
         const [catRes, prodRes] = await Promise.all([
-          apiClient.getCategories(),
-          apiClient.getProducts(),
+          apiClient.getCategories({ client_page: 'delivery'}),
+          apiClient.getProducts({ client_page: 'delivery'}),
         ]);
 
         setCategories(catRes.data);

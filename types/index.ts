@@ -17,6 +17,8 @@ export interface Product {
   stock_type: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'PERMANENT';
   in_stock: boolean;
   active_recommendation: boolean | null;
+  show_delivery: boolean;
+  show_menu: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -34,6 +36,8 @@ export interface Category {
   description: string;
   order: number;
   is_popular: boolean;
+  show_delivery: boolean;
+  show_menu: boolean;
 }
 
 export interface CartItem {

@@ -96,6 +96,8 @@ interface FormData {
 
   // Allergens array (string keys from EU_ALLERGENS)
   allergens: string[];
+  show_delivery: boolean;
+  show_menu: boolean;
 }
 
 interface ProductFormProps {
@@ -152,6 +154,8 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
       allergens: Array.isArray((product as any)?.allergens)
           ? (product as any).allergens
           : [],
+      show_delivery: product?.show_delivery ?? true,
+      show_menu: product?.show_menu ?? true,
     },
   });
 
@@ -351,6 +355,8 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
 
         // Allergens
         allergens: data.allergens || [],
+        show_delivery: data.show_delivery ?? true,
+        show_menu: data.show_menu ?? true,
       };
 
       let saved: Product;
@@ -688,6 +694,28 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
                 onCheckedChange={(checked: any) => setValue('available', !!checked)}
             />
             <Label htmlFor="available">Disponibil</Label>
+          </div>
+        </div>
+
+        <div className="flex gap-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+                id="show_delivery"
+                checked={watch('show_delivery')}
+                onCheckedChange={(checked: any) => setValue('show_delivery', !!checked)}
+            />
+            <Label htmlFor="show_delivery">Afiseaza in meniul de delivery</Label>
+          </div>
+        </div>
+
+        <div className="flex gap-6">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+                id="show_menu"
+                checked={watch('show_menu')}
+                onCheckedChange={(checked: any) => setValue('show_menu', !!checked)}
+            />
+            <Label htmlFor="show_menu">Afiseaza in meniul digital</Label>
           </div>
         </div>
 
