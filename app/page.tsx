@@ -317,7 +317,7 @@ export default function HomePage() {
                   </h2>
                   <Star className="w-6 h-6 text-[hsl(var(--accent))] fill-current" aria-hidden="true" />
                 </div>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                <p className="text-[hsl(222_12%_40%) text-lg max-w-2xl mx-auto">
                   Preparatele noastre cele mai apreciate, selectate special pentru tine
                 </p>
               </header>

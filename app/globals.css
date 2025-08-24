@@ -11,7 +11,7 @@
     --popover: 45 58% 98%;
     --popover-foreground: 222 20% 12%;
 
-    --primary: 150 90% 28%;       /* verde Sky (CTA, linkuri) */
+    --primary: 150 90% 26%;
     --primary-foreground: 0 0% 98%;
 
     --secondary: 45 40% 92%;      /* crem deschis (chipuri, badge-uri) */
@@ -20,8 +20,8 @@
     --muted: 45 30% 88%;
     --muted-foreground: 222 12% 40%;
 
-    --accent: 46 85% 42%;         /* auriu – potrivit cu logo-ul */
-    --accent-foreground: 222 20% 12%;
+    --accent: 46 85% 28%;         /* auriu – potrivit cu logo-ul */
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -47,7 +47,7 @@
     --popover-foreground: 45 40% 92%;
 
     --primary: 150 85% 48%;       /* verde mai electric */
-    --primary-foreground: 0 0% 98%;
+    --primary-foreground: 225 18% 12%;
 
     --secondary: 225 15% 18%;
     --secondary-foreground: 45 40% 92%;
