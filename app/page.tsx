@@ -141,7 +141,7 @@ export default function HomePage() {
 
         <main role="main">
           {/* Hero Section - Enhanced for SEO and accessibility */}
-          <section className="relative h-[70vh] lg:h-[80vh] flex items-center justify-center">
+          <section className="relative z-10 h-[70vh] lg:h-[80vh] flex items-center justify-center text-white bg-black/10">
               <Image
                   src={heroImage}
                   alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
