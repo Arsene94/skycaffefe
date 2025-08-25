@@ -593,12 +593,7 @@ class ApiClient {
 
     async updateOrder(
         id: string | number,
-        payload: {
-            items?: { product_id: number; quantity: number }[];
-            notes?: string | null;
-            payment_method?: 'cash' | 'card';
-            delivery_type?: 'delivery' | 'pickup';
-        }
+        payload: any
     ) {
         return this.request<any>(`/orders/${id}`, {
             method: 'PATCH',

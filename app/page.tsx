@@ -3,7 +3,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header.server'
 import { Footer } from '@/components/layout/footer' // server-only
-import ClientOnly from '@/components/util/client-only'
 import HomeClient from './home-client'
 import heroImage from '@/public/hero.webp'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +19,6 @@ export default function HomePage() {
             <Image
                 src={heroImage}
                 alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
-                fill
                 priority
                 fetchPriority="high"
                 sizes="100vw"
@@ -77,9 +75,7 @@ export default function HomePage() {
           </section>
 
           {/* Sub-fold: montează doar după mount pentru a nu afecta LCP */}
-          <ClientOnly>
-            <HomeClient />
-          </ClientOnly>
+          <HomeClient />
         </main>
         <Footer />
       </>

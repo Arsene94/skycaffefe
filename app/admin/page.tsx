@@ -466,12 +466,20 @@ function OrderEditDialog({
   const [saving, setSaving] = useState(false);
   const [order, setOrder] = useState<any | null>(null);
 
-  // form state
+  // status & meta
   const [status, setStatus] = useState<OrderStatus>('pending');
-  const [deliveryType, setDeliveryType] = useState<'delivery'|'pickup'>('delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'cash'|'card'>('cash');
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [notes, setNotes] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
+
+  // client
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
+  const [phone, setPhone]         = useState('');
+
+  // address (text snapshot)
+  const [addressText, setAddressText] = useState('');
 
   // items
   const [items, setItems] = useState<{ product: ProductLite; quantity: number }[]>([]);
@@ -495,31 +503,55 @@ function OrderEditDialog({
     (async () => {
       try {
         setLoading(true);
+
         const o = await apiClient.getOrder(orderId);
         const data = o?.data ?? o;
 
         setOrder(data);
         setStatus((data.status ?? 'pending') as OrderStatus);
-        setDeliveryType((data.delivery_type ?? 'delivery') as 'delivery'|'pickup');
-        setPaymentMethod((data.payment_method ?? 'cash') as 'cash'|'card');
+        setDeliveryType((data.delivery_type ?? 'delivery') as 'delivery' | 'pickup');
+        setPaymentMethod((data.payment_method ?? 'cash') as 'cash' | 'card');
         setNotes(data.notes ?? '');
         setDeliveryFee(Number(data.delivery_fee ?? 0));
 
+        // Client
+        const fullName = (data.customer_name ?? '').toString().trim();
+        if (fullName) {
+          const parts = fullName.split(/\s+/);
+          setFirstName(parts[0] ?? '');
+          setLastName(parts.slice(1).join(' ') ?? '');
+        } else {
+          setFirstName('');
+          setLastName('');
+        }
+        setPhone(data.customer_phone ?? '');
+
+        // Address snapshot (dacă există saved address, îl concatenăm ca fallback)
+        const snapshot = data.address_text
+            ?? (data.address ? `${data.address.city ?? ''}${data.address.city ? ', ' : ''}${data.address.address ?? ''}` : '');
+        setAddressText(snapshot ?? '');
+
+        // Items
         const its = (data.items ?? []).map((it: any) => ({
           product: {
             id: it.product_id ?? it.product?.id,
-            name: it.product?.name ?? it.name ?? `Produs #${it.product_id}`,
-            price: Number(it.price ?? it.product?.price ?? 0),
+            name: it.product?.name ?? it.product_name ?? it.name ?? `Produs #${it.product_id}`,
+            price: Number(
+                it.unit_price ?? it.price ?? it.product?.price ?? 0
+            ),
           },
           quantity: Number(it.quantity ?? 1),
         }));
         setItems(its);
 
+        // Offers
         try {
           const res = await apiClient.getOffers();
           const list = Array.isArray(res) ? res : res?.data ?? [];
           setOffers(list);
-        } catch { setOffers([]); }
+        } catch {
+          setOffers([]);
+        }
       } catch (e: any) {
         console.error(e);
         toast.error(e?.message || 'Eroare la încărcarea comenzii');
@@ -539,7 +571,9 @@ function OrderEditDialog({
         setSearching(true);
         const res = await apiClient.searchProducts({ q: debounced, pageSize: 10 });
         const list: ProductLite[] = (res?.data ?? res ?? []).map((p: any) => ({
-          id: p.id, name: p.name, price: Number(p.price ?? 0),
+          id: p.id,
+          name: p.name,
+          price: Number(p.price ?? 0),
         }));
         setResults(list);
       } catch {
@@ -551,8 +585,8 @@ function OrderEditDialog({
   }, [open, debounced]);
 
   const addProduct = (p: ProductLite) => {
-    setItems(prev => {
-      const idx = prev.findIndex(i => String(i.product.id) === String(p.id));
+    setItems((prev) => {
+      const idx = prev.findIndex((i) => String(i.product.id) === String(p.id));
       if (idx >= 0) {
         const next = [...prev];
         next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
@@ -563,14 +597,26 @@ function OrderEditDialog({
     setQ('');
     setResults([]);
   };
-  const inc = (id: string | number) => setItems(prev => prev.map(i => String(i.product.id) === String(id) ? { ...i, quantity: i.quantity + 1 } : i));
-  const dec = (id: string | number) => setItems(prev => prev.map(i => {
-    if (String(i.product.id) !== String(id)) return i;
-    const q = Math.max(1, i.quantity - 1);
-    return { ...i, quantity: q };
-  }));
-  const removeItem = (id: string | number) => setItems(prev => prev.filter(i => String(i.product.id) !== String(id)));
+  const inc = (id: string | number) =>
+      setItems((prev) =>
+          prev.map((i) =>
+              String(i.product.id) === String(id)
+                  ? { ...i, quantity: i.quantity + 1 }
+                  : i
+          )
+      );
+  const dec = (id: string | number) =>
+      setItems((prev) =>
+          prev.map((i) => {
+            if (String(i.product.id) !== String(id)) return i;
+            const q = Math.max(1, i.quantity - 1);
+            return { ...i, quantity: q };
+          })
+      );
+  const removeItem = (id: string | number) =>
+      setItems((prev) => prev.filter((i) => String(i.product.id) !== String(id)));
 
+  /* ------- discount logic (same as before) -------- */
   type OfferDTO = {
     id: number;
     code: string;
@@ -580,110 +626,165 @@ function OrderEditDialog({
     application_type: 'cart' | 'category' | 'product_ids';
     category_id?: string | number | null;
     product_ids?: (string | number)[];
-    conditions?: { minItems?: number; minSubtotal?: number; bxgy?: { buy: number; get: number; limit?: number | null } } | null;
+    conditions?: {
+      minItems?: number;
+      minSubtotal?: number;
+      bxgy?: { buy: number; get: number; limit?: number | null };
+    } | null;
     stackable: boolean;
     priority: number;
     active: boolean;
     isActiveNow?: boolean;
   };
 
-  const eligibleItemsForOffer = useCallback((cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO) => {
-    const isEligible = (ci: { product: ProductLite; quantity: number }) => {
-      switch (offer.application_type) {
-        case 'cart':
-          return true;
-        case 'category':
-          return offer.category_id ? false : false;
-        case 'product_ids': {
-          const set = new Set((offer.product_ids || []).map(String));
-          return set.has(String(ci.product.id));
+  const eligibleItemsForOffer = useCallback(
+      (cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO) => {
+        const isEligible = (ci: { product: ProductLite; quantity: number }) => {
+          switch (offer.application_type) {
+            case 'cart':
+              return true;
+            case 'category':
+              // dacă vrei pe viitor: mapează categoriile în product
+              return false;
+            case 'product_ids': {
+              const set = new Set((offer.product_ids || []).map(String));
+              return set.has(String(ci.product.id));
+            }
+            default:
+              return false;
+          }
+        };
+        const eligibleCartItems = cartItems.filter(isEligible);
+        const qty = eligibleCartItems.reduce((s, i) => s + i.quantity, 0);
+        const subtotal = eligibleCartItems.reduce(
+            (s, i) => s + i.product.price * i.quantity,
+            0
+        );
+        const unitPrices: number[] = [];
+        eligibleCartItems.forEach((i) => {
+          for (let k = 0; k < i.quantity; k++) unitPrices.push(i.product.price);
+        });
+        unitPrices.sort((a, b) => a - b);
+        return { eligibleCartItems, qty, subtotal, unitPrices };
+      },
+      []
+  );
+
+  const calcOfferDiscount = useCallback(
+      (cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO): number => {
+        const { qty, subtotal, unitPrices } = eligibleItemsForOffer(cartItems, offer);
+
+        if (offer.conditions?.minSubtotal != null && subtotal < offer.conditions.minSubtotal)
+          return 0;
+        if (offer.conditions?.minItems != null && qty < offer.conditions.minItems)
+          return 0;
+
+        switch (offer.type) {
+          case 'PERCENT':
+            return (subtotal * offer.value) / 100;
+          case 'FIXED':
+            return Math.min(offer.value, subtotal);
+          case 'BXGY': {
+            const bxgy = offer.conditions?.bxgy;
+            if (!bxgy || qty <= 0) return 0;
+            const block = bxgy.buy + bxgy.get;
+            const blocks = Math.floor(qty / block);
+            if (blocks <= 0) return 0;
+            const limitBlocks = bxgy.limit ? Math.min(blocks, bxgy.limit) : blocks;
+            const freeUnits = limitBlocks * bxgy.get;
+            if (freeUnits <= 0) return 0;
+            return unitPrices.slice(0, freeUnits).reduce((s, p) => s + p, 0);
+          }
+          default:
+            return 0;
         }
-        default:
-          return false;
-      }
-    };
-    const eligibleCartItems = cartItems.filter(isEligible);
-    const qty = eligibleCartItems.reduce((s, i) => s + i.quantity, 0);
-    const subtotal = eligibleCartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
-    const unitPrices: number[] = [];
-    eligibleCartItems.forEach(i => { for (let k = 0; k < i.quantity; k++) unitPrices.push(i.product.price); });
-    unitPrices.sort((a, b) => a - b);
-    return { eligibleCartItems, qty, subtotal, unitPrices };
-  }, []);
+      },
+      [eligibleItemsForOffer]
+  );
 
-  const calcOfferDiscount = useCallback((cartItems: { product: ProductLite; quantity: number }[], offer: OfferDTO): number => {
-    const { qty, subtotal, unitPrices } = eligibleItemsForOffer(cartItems, offer);
-    if (offer.conditions?.minSubtotal != null && subtotal < offer.conditions.minSubtotal) return 0;
-    if (offer.conditions?.minItems != null && qty < offer.conditions.minItems) return 0;
+  const calculateDiscount = useCallback(
+      (cartItems: { product: ProductLite; quantity: number }[], offersRaw: any[]) => {
+        const parsed: OfferDTO[] = (offersRaw ?? []).map((o: any) => ({
+          id: Number(o.id),
+          code: String(o.code ?? ''),
+          name: String(o.name ?? ''),
+          type: o.type,
+          value: Number(o.value ?? 0),
+          application_type: (o.applicationType ?? o.application_type) as any,
+          category_id: o.categoryId ?? o.category_id ?? null,
+          product_ids: o.productIds ?? o.product_ids ?? [],
+          conditions: o.conditions ?? null,
+          stackable: Boolean(o.stackable),
+          priority: Number(o.priority ?? 0),
+          active: Boolean(o.active),
+          isActiveNow: o.isActiveNow ?? true,
+        }));
+        const sorted = parsed
+            .filter((o) => o.active && o.isActiveNow !== false)
+            .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+        let totalDiscount = 0;
+        let nonStackApplied = false;
+        for (const offer of sorted) {
+          const d = calcOfferDiscount(cartItems, offer);
+          if (!offer.stackable && !nonStackApplied && d > 0) {
+            totalDiscount += d;
+            nonStackApplied = true;
+          } else if (offer.stackable && d > 0) {
+            totalDiscount += d;
+          }
+        }
+        return totalDiscount;
+      },
+      [calcOfferDiscount]
+  );
 
-    switch (offer.type) {
-      case 'PERCENT':
-        return (subtotal * offer.value) / 100;
-      case 'FIXED':
-        return Math.min(offer.value, subtotal);
-      case 'BXGY': {
-        const bxgy = offer.conditions?.bxgy;
-        if (!bxgy || qty <= 0) return 0;
-        const block = bxgy.buy + bxgy.get;
-        const blocks = Math.floor(qty / block);
-        if (blocks <= 0) return 0;
-        const limitBlocks = bxgy.limit ? Math.min(blocks, bxgy.limit) : blocks;
-        const freeUnits = limitBlocks * bxgy.get;
-        if (freeUnits <= 0) return 0;
-        return unitPrices.slice(0, freeUnits).reduce((s, p) => s + p, 0);
-      }
-      default:
-        return 0;
-    }
-  }, [eligibleItemsForOffer]);
-
-  const calculateDiscount = useCallback((cartItems: { product: ProductLite; quantity: number }[], offersRaw: any[]) => {
-    const parsed: OfferDTO[] = (offersRaw ?? []).map((o: any) => ({
-      id: Number(o.id),
-      code: String(o.code ?? ''),
-      name: String(o.name ?? ''),
-      type: o.type,
-      value: Number(o.value ?? 0),
-      application_type: (o.applicationType ?? o.application_type) as any,
-      category_id: o.categoryId ?? o.category_id ?? null,
-      product_ids: o.productIds ?? o.product_ids ?? [],
-      conditions: o.conditions ?? null,
-      stackable: Boolean(o.stackable),
-      priority: Number(o.priority ?? 0),
-      active: Boolean(o.active),
-      isActiveNow: o.isActiveNow ?? true,
-    }));
-    const sorted = parsed.filter(o => o.active && o.isActiveNow !== false).sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
-    let totalDiscount = 0;
-    let nonStackApplied = false;
-    for (const offer of sorted) {
-      const d = calcOfferDiscount(cartItems, offer);
-      if (!offer.stackable && !nonStackApplied && d > 0) {
-        totalDiscount += d;
-        nonStackApplied = true;
-      } else if (offer.stackable && d > 0) {
-        totalDiscount += d;
-      }
-    }
-    return totalDiscount;
-  }, [calcOfferDiscount]);
-
-  const subtotal = useMemo(() => items.reduce((s, i) => s + i.product.price * i.quantity, 0), [items]);
-  const discount = useMemo(() => calculateDiscount(items, offers), [calculateDiscount, items, offers]);
-  const total = Math.max(0, subtotal - discount + (deliveryType === 'delivery' ? deliveryFee : 0));
+  const subtotal = useMemo(
+      () => items.reduce((s, i) => s + i.product.price * i.quantity, 0),
+      [items]
+  );
+  const discount = useMemo(
+      () => calculateDiscount(items, offers),
+      [calculateDiscount, items, offers]
+  );
+  const total = Math.max(
+      0,
+      subtotal - discount + (deliveryType === 'delivery' ? Number(deliveryFee) || 0 : 0)
+  );
 
   const save = async () => {
     try {
       setSaving(true);
+
+      // Update status dacă s-a schimbat
       if (order && status !== order.status) {
         await apiClient.updateOrderStatus(orderId, status);
       }
-      await apiClient.updateOrder(orderId, {
-        items: items.map(i => ({ product_id: Number(i.product.id), quantity: i.quantity })),
+
+      // Numele complet
+      const customer_name = [firstName.trim(), lastName.trim()]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+
+      const payload: any = {
+        items: items.map((i) => ({
+          product_id: Number(i.product.id),
+          quantity: i.quantity,
+        })),
         notes: notes || null,
         payment_method: paymentMethod,
         delivery_type: deliveryType,
-      });
+        // 👇 client info
+        customer_name: customer_name || null,
+        customer_phone: phone?.trim() || null,
+        // 👇 adresă text snapshot (nouă / editabilă)
+        address_text: deliveryType === 'delivery' ? (addressText?.trim() || null) : null,
+        // 👇 taxă livrare
+        delivery_fee: Number(isNaN(deliveryFee as any) ? 0 : deliveryFee),
+      };
+
+      await apiClient.updateOrder(orderId, payload);
+
       toast.success('Comandă actualizată');
       onSaved?.();
       onOpenChange(false);
@@ -710,8 +811,10 @@ function OrderEditDialog({
 
   return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl lg:max-w-4xl">
-          <DialogHeader><DialogTitle>Editează comanda #{orderId}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl lg:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Editează comanda #{orderId}</DialogTitle>
+          </DialogHeader>
 
           {loading ? (
               <div className="py-12 text-center text-muted-foreground flex items-center justify-center gap-2">
@@ -719,34 +822,58 @@ function OrderEditDialog({
               </div>
           ) : (
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
-                {/* Stânga */}
+                {/* Col stânga */}
                 <div className="lg:col-span-3 space-y-4">
+                  {/* Status / livrare / plată */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1 md:col-span-1">
+                    <div className="space-y-1">
                       <Label>Status</Label>
                       <Select value={status} onValueChange={(v) => setStatus(v as OrderStatus)}>
-                        <SelectTrigger><SelectValue placeholder="Alege status" /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Alege status" />
+                        </SelectTrigger>
                         <SelectContent>
-                          {(['pending','confirmed','preparing','out_for_delivery','completed','canceled'] as OrderStatus[]).map(st => (
-                              <SelectItem key={st} value={st}>{getStatusLabel(st)}</SelectItem>
+                          {(
+                              [
+                                'pending',
+                                'confirmed',
+                                'preparing',
+                                'out_for_delivery',
+                                'completed',
+                                'canceled',
+                              ] as OrderStatus[]
+                          ).map((st) => (
+                              <SelectItem key={st} value={st}>
+                                {getStatusLabel(st)}
+                              </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1 md:col-span-1">
+                    <div className="space-y-1">
                       <Label>Livrare</Label>
-                      <Select value={deliveryType} onValueChange={(v) => setDeliveryType(v as any)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                      <Select
+                          value={deliveryType}
+                          onValueChange={(v) => setDeliveryType(v as any)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="delivery">Livrare</SelectItem>
                           <SelectItem value="pickup">Ridicare</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1 md:col-span-1">
+                    <div className="space-y-1">
                       <Label>Plată</Label>
-                      <Select value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                      <Select
+                          value={paymentMethod}
+                          onValueChange={(v) => setPaymentMethod(v as any)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="cash">Numerar</SelectItem>
                           <SelectItem value="card">Card</SelectItem>
@@ -755,22 +882,95 @@ function OrderEditDialog({
                     </div>
                   </div>
 
+                  {/* Client */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label>Nume</Label>
+                      <Input
+                          placeholder="Popescu"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Prenume</Label>
+                      <Input
+                          placeholder="Mihai"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Telefon</Label>
+                      <Input
+                          placeholder="07xx xxx xxx"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Adresă de livrare + taxă livrare */}
+                  {deliveryType === 'delivery' && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 space-y-1">
+                          <Label>Adresă de livrare</Label>
+                          <Input
+                              placeholder="Str. Exemplu 10, Oraș"
+                              value={addressText}
+                              onChange={(e) => setAddressText(e.target.value)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Poți edita adresa existentă sau introduce una nouă (se va salva ca snapshot pe comandă).
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Taxă livrare</Label>
+                          <Input
+                              type="number"
+                              step="0.01"
+                              inputMode="decimal"
+                              value={String(deliveryFee)}
+                              onChange={(e) => setDeliveryFee(Number(e.target.value || 0))}
+                          />
+                        </div>
+                      </div>
+                  )}
+
+                  {/* Observații */}
                   <div className="space-y-1">
                     <Label>Observații</Label>
-                    <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Instrucțiuni..." />
+                    <Input
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Instrucțiuni..."
+                    />
                   </div>
 
                   <Separator />
 
+                  {/* Produse */}
                   <div className="space-y-3">
                     <Label>Produse</Label>
                     <div>
-                      <Input placeholder="Caută produs..." value={q} onChange={(e) => setQ(e.target.value)} />
+                      <Input
+                          placeholder="Caută produs..."
+                          value={q}
+                          onChange={(e) => setQ(e.target.value)}
+                      />
                       {q && (
                           <div className="mt-2 max-h-44 overflow-y-auto border rounded-md">
-                            {searching && <div className="p-3 text-sm text-muted-foreground">Se caută...</div>}
-                            {!searching && results.length === 0 && <div className="p-3 text-sm text-muted-foreground">Niciun produs</div>}
-                            {results.map(p => (
+                            {searching && (
+                                <div className="p-3 text-sm text-muted-foreground">
+                                  Se caută...
+                                </div>
+                            )}
+                            {!searching && results.length === 0 && (
+                                <div className="p-3 text-sm text-muted-foreground">
+                                  Niciun produs
+                                </div>
+                            )}
+                            {results.map((p) => (
                                 <button
                                     key={String(p.id)}
                                     type="button"
@@ -778,7 +978,9 @@ function OrderEditDialog({
                                     onClick={() => addProduct(p)}
                                 >
                                   <span className="truncate">{p.name}</span>
-                                  <span className="text-sm text-muted-foreground">{formatPrice(p.price)}</span>
+                                  <span className="text-sm text-muted-foreground">
+                            {formatPrice(p.price)}
+                          </span>
                                 </button>
                             ))}
                           </div>
@@ -787,17 +989,40 @@ function OrderEditDialog({
 
                     {items.length > 0 ? (
                         <div className="space-y-2">
-                          {items.map(it => (
-                              <div key={String(it.product.id)} className="flex items-center justify-between border rounded-md px-3 py-2 gap-2">
+                          {items.map((it) => (
+                              <div
+                                  key={String(it.product.id)}
+                                  className="flex items-center justify-between border rounded-md px-3 py-2 gap-2"
+                              >
                                 <div className="min-w-0 flex-1">
                                   <div className="font-medium truncate">{it.product.name}</div>
-                                  <div className="text-xs text-muted-foreground">{formatPrice(it.product.price)} / buc</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {formatPrice(it.product.price)} / buc
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="icon" onClick={() => dec(it.product.id)}><Minus className="w-3 h-3" /></Button>
-                                  <div className="w-8 text-center font-medium">{it.quantity}</div>
-                                  <Button variant="outline" size="icon" onClick={() => inc(it.product.id)}><Plus className="w-3 h-3" /></Button>
-                                  <Button variant="ghost" size="icon" onClick={() => removeItem(it.product.id)}>
+                                  <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => dec(it.product.id)}
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </Button>
+                                  <div className="w-8 text-center font-medium">
+                                    {it.quantity}
+                                  </div>
+                                  <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => inc(it.product.id)}
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => removeItem(it.product.id)}
+                                  >
                                     <Trash2 className="w-4 h-4 text-red-500" />
                                   </Button>
                                 </div>
@@ -805,15 +1030,19 @@ function OrderEditDialog({
                           ))}
                         </div>
                     ) : (
-                        <div className="text-sm text-muted-foreground">Adaugă produse în comandă.</div>
+                        <div className="text-sm text-muted-foreground">
+                          Adaugă produse în comandă.
+                        </div>
                     )}
                   </div>
                 </div>
 
-                {/* Dreapta: sumar */}
+                {/* Col dreapta */}
                 <div className="lg:col-span-2 space-y-4">
                   <Card>
-                    <CardHeader><CardTitle className="text-base">Sumar</CardTitle></CardHeader>
+                    <CardHeader>
+                      <CardTitle className="text-base">Sumar</CardTitle>
+                    </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span>Subtotal</span>
@@ -828,7 +1057,9 @@ function OrderEditDialog({
                       <div className="flex justify-between">
                         <span>Livrare</span>
                         <span>
-                      {deliveryType === 'pickup' ? 'Gratuit' : formatPrice(deliveryFee)}
+                      {deliveryType === 'pickup'
+                          ? 'Gratuit'
+                          : formatPrice(Number(deliveryFee) || 0)}
                     </span>
                       </div>
                       <Separator />
@@ -839,9 +1070,19 @@ function OrderEditDialog({
 
                       <div className="flex flex-col sm:flex-row gap-2 pt-3">
                         <Button className="flex-1" onClick={save} disabled={saving}>
-                          {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Se salvează</> : 'Salvează'}
+                          {saving ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Se salvează
+                              </>
+                          ) : (
+                              'Salvează'
+                          )}
                         </Button>
-                        <Button className="flex-1" variant="destructive" onClick={cancelOrder}>
+                        <Button
+                            className="flex-1"
+                            variant="destructive"
+                            onClick={cancelOrder}
+                        >
                           Anulează comanda
                         </Button>
                       </div>
