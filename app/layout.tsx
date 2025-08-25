@@ -5,6 +5,8 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from "@/contexts/auth-context";
 import Script from "next/script";
 import { generatePageMetadata } from "@/utils/generate-metadata";
+import { SettingsProvider } from '@/contexts/settings-context';
+import { fetchSettingsServer } from '@/lib/settings';
 
 // Enhanced viewport configuration
 export const viewport: Viewport = {
@@ -32,7 +34,9 @@ export const metadata: Metadata = generatePageMetadata({
     ],
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+    const settings = await fetchSettingsServer();
+
     return (
         <html lang="ro" suppressHydrationWarning>
         <head>
@@ -52,72 +56,74 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body className="font-sans antialiased overflow-x-hidden">
         <AuthProvider>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-                {/* Skip to main content pentru accesibilitate */}
-                <a
-                    href="#main-content"
-                    className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                >
-                    Sari la conținutul principal
-                </a>
+                <SettingsProvider initial={settings}>
+                    {/* Skip to main content pentru accesibilitate */}
+                    <a
+                        href="#main-content"
+                        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    >
+                        Sari la conținutul principal
+                    </a>
 
-                {/* Conținutul site-ului */}
-                <main id="main-content">{children}</main>
+                    {/* Conținutul site-ului */}
+                    <main id="main-content">{children}</main>
 
-                {/* Structured data for local business */}
-                <Script
-                    id="structured-data"
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{
-                        __html: JSON.stringify({
-                            "@context": "https://schema.org",
-                            "@type": "Restaurant",
-                            "name": "Sky Caffe",
-                            "alternateName": "Sky Caffe Năvodari",
-                            "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
-                            "image": [
-                                "https://skycaffe.ro/hero.webp",
-                                "https://skycaffe.ro/og-image.webp"
-                            ],
-                            "address": {
-                                "@type": "PostalAddress",
-                                "streetAddress": "Centrul Năvodari, Rooftop etaj 4",
-                                "addressLocality": "Năvodari",
-                                "addressCountry": "RO"
+                    {/* Structured data for local business */}
+                    <Script
+                        id="structured-data"
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{
+                            __html: JSON.stringify({
+                                "@context": "https://schema.org",
+                                "@type": "Restaurant",
+                                "name": "Sky Caffe",
+                                "alternateName": "Sky Caffe Năvodari",
+                                "description": "Bistro premium pe rooftop cu livrare rapidă în Năvodari",
+                                "image": [
+                                    "https://skycaffe.ro/hero.webp",
+                                    "https://skycaffe.ro/og-image.webp"
+                                ],
+                                "address": {
+                                    "@type": "PostalAddress",
+                                    "streetAddress": "Centrul Năvodari, Rooftop etaj 4",
+                                    "addressLocality": "Năvodari",
+                                    "addressCountry": "RO"
+                                },
+                                "geo": { "@type": "GeoCoordinates", "latitude": "44.3167", "longitude": "28.6167" },
+                                "url": "https://skycaffe.ro",
+                                "telephone": "+40751123456",
+                                "servesCuisine": ["Romanian", "Italian", "International"],
+                                "priceRange": "$$",
+                                "openingHours": "Mo-Su 10:00-22:30",
+                                "hasMenu": "https://skycaffe.ro/meniu",
+                                "acceptsReservations": true,
+                                "deliveryService": { "@type": "DeliveryService", "serviceArea": { "@type": "City", "name": "Năvodari" } },
+                                "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "127" },
+                                "review": [
+                                    {
+                                        "@type": "Review",
+                                        "reviewRating": { "@type": "Rating", "ratingValue": "5" },
+                                        "author": { "@type": "Person", "name": "Maria Popescu" },
+                                        "reviewBody": "Mâncarea este delicioasă și vederea de pe rooftop este spectaculoasă! Livrarea a fost foarte rapidă."
+                                    }
+                                ]
+                            })
+                        }}
+                    />
+
+                    <Toaster
+                        position="top-center"
+                        richColors
+                        toastOptions={{
+                            duration: 4000,
+                            style: {
+                                background: 'hsl(var(--background))',
+                                color: 'hsl(var(--foreground))',
+                                border: '1px solid hsl(var(--border))',
                             },
-                            "geo": { "@type": "GeoCoordinates", "latitude": "44.3167", "longitude": "28.6167" },
-                            "url": "https://skycaffe.ro",
-                            "telephone": "+40751123456",
-                            "servesCuisine": ["Romanian", "Italian", "International"],
-                            "priceRange": "$$",
-                            "openingHours": "Mo-Su 10:00-22:30",
-                            "hasMenu": "https://skycaffe.ro/meniu",
-                            "acceptsReservations": true,
-                            "deliveryService": { "@type": "DeliveryService", "serviceArea": { "@type": "City", "name": "Năvodari" } },
-                            "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "127" },
-                            "review": [
-                                {
-                                    "@type": "Review",
-                                    "reviewRating": { "@type": "Rating", "ratingValue": "5" },
-                                    "author": { "@type": "Person", "name": "Maria Popescu" },
-                                    "reviewBody": "Mâncarea este delicioasă și vederea de pe rooftop este spectaculoasă! Livrarea a fost foarte rapidă."
-                                }
-                            ]
-                        })
-                    }}
-                />
-
-                <Toaster
-                    position="top-center"
-                    richColors
-                    toastOptions={{
-                        duration: 4000,
-                        style: {
-                            background: 'hsl(var(--background))',
-                            color: 'hsl(var(--foreground))',
-                            border: '1px solid hsl(var(--border))',
-                        },
-                    }}
-                />
+                        }}
+                    />
+                </SettingsProvider>
             </ThemeProvider>
         </AuthProvider>
 

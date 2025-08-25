@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { formatPrice } from '@/lib/format';
 import { usePathname } from 'next/navigation';
+import {useSettings} from "@/contexts/settings-context";
 
 type CartState = ReturnType<typeof useCartStore.getState>;
 
@@ -22,7 +23,7 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-
+  const { business_name } = useSettings();
   const itemCount         = useCartStore((s: CartState) => s.itemCount);
   const openCart          = useCartStore((s: CartState) => s.openCart);
   const getOfferHints     = useCartStore((s: CartState) => s.getOfferHints);
@@ -68,7 +69,7 @@ export function Header() {
                     'max-w-[55vw] sm:max-w-none truncate'
                 )}
             >
-              Sky Caffe
+              {business_name || 'Brand'}
             </Link>
 
             {/* Nav desktop */}

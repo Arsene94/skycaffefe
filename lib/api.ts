@@ -674,14 +674,16 @@ class ApiClient {
         accept_cash: boolean;
         accept_card: boolean;
         pickup_address: string | null;
-        timezone: string;
-        currency: string;
     }>) {
         return this.request<any>('/admin/settings', {
             method: 'PUT',
             body: JSON.stringify(payload),
             credentials: 'include',
         });
+    }
+
+    async getSettings() {
+        return this.request<any>('/settings', { next: { revalidate: 300, tags: ['settings'] } });
     }
 
 }

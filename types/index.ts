@@ -190,3 +190,72 @@ export type ViewOrder = {
     notes?: string;
   };
 };
+
+export type WeekDay =
+    | 'monday'
+    | 'tuesday'
+    | 'wednesday'
+    | 'thursday'
+    | 'friday'
+    | 'saturday'
+    | 'sunday';
+
+export type DayHours = {
+  enabled: boolean;
+  start: string; // "HH:mm"
+  end: string;   // "HH:mm"
+};
+
+export type Availability = {
+  workingHours: Record<WeekDay, DayHours>;
+};
+
+export const WORKING_HOURS_DEFAULTS: Availability = {
+  workingHours: {
+    monday:    { enabled: true,  start: '09:00', end: '22:00' },
+    tuesday:   { enabled: true,  start: '09:00', end: '22:00' },
+    wednesday: { enabled: true,  start: '09:00', end: '22:00' },
+    thursday:  { enabled: true,  start: '09:00', end: '22:00' },
+    friday:    { enabled: true,  start: '09:00', end: '22:00' },
+    saturday:  { enabled: false, start: '10:00', end: '14:00' },
+    sunday:    { enabled: false, start: '10:00', end: '14:00' },
+  },
+};
+
+export type AppSettings = {
+  business_name: string;
+  business_short: string;
+  site_email: string | null;
+  support_phone: string | null;
+  notify_whatsapp_numbers: string[];
+  notify_on_new_order: boolean;
+  notify_on_order_update: boolean; // 🆕
+  order_auto_confirm: boolean;
+  accept_cash: boolean;
+  accept_card: boolean;
+  pickup_address: string | null;
+  availability: Availability;
+  availability_days_label: string;
+  availability_label_with_hours: string;
+  is_open_now: boolean;
+  hours_today: { "enabled": boolean, "start": string, "end": string }
+};
+
+export const SETTINGS_DEFAULTS: AppSettings = {
+  business_name: '',
+  business_short: '',
+  site_email: null,
+  support_phone: null,
+  notify_whatsapp_numbers: [],
+  notify_on_new_order: true,
+  notify_on_order_update: true, // 🆕
+  order_auto_confirm: false,
+  accept_cash: true,
+  accept_card: true,
+  pickup_address: null,
+  availability: WORKING_HOURS_DEFAULTS,
+  availability_days_label: '',
+  availability_label_with_hours: '',
+  is_open_now: false,
+  hours_today: { enabled: false, start: '09:00', end: '22:00' }
+};
