@@ -28,7 +28,7 @@ export default function HomePage() {
                 fill
             />
             <div
-                className="absolute inset-0 bg-[linear-gradient(135deg,_rgba(16,185,129,.65)_0%,_rgba(5,150,105,.65)_100%)]"
+                className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--hero)/0.65)_0%,hsl(var(--hero-contrast)/0.65)_100%)]"
                 aria-hidden
             />
 
