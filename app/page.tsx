@@ -16,16 +16,10 @@ export default function HomePage() {
         <main role="main">
           {/* HERO - SSR only */}
           <section className="relative z-10 h-[60vh] md:h-[70vh] lg:h-[80vh] flex items-center justify-center text-white">
-            <Image
-                src={heroImage}
-                alt="Sky Caffe rooftop terrace cu vederea orașului Năvodari, mese elegante și atmosferă premium pentru o experiență culinară de neuitat"
-                priority
-                fetchPriority="high"
-                sizes="100vw"
-                quality={55}
-                placeholder="empty"
-                className="object-cover"
-            />
+            <div
+                className="h-[80vh] bg-cover bg-center"
+                style={{ backgroundImage: "url(/hero.webp)" }}
+            >
             <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--hero)/0.65)_0%,hsl(var(--hero-contrast)/0.65)_100%)]" aria-hidden />
 
             <div className="relative z-10 text-center text-white px-4 max-w-4xl">
@@ -72,6 +66,7 @@ export default function HomePage() {
                 </div>
               </div>
             </aside>
+            </div>
           </section>
 
           {/* Sub-fold: montează doar după mount pentru a nu afecta LCP */}
