@@ -1,7 +1,7 @@
-// app/page.tsx (SERVER component)
+export const dynamic = 'force-static'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Header } from '@/components/layout/header'
+import { Header } from '@/components/layout/header.server'
 import { Footer } from '@/components/layout/footer' // server-only
 import ClientOnly from '@/components/util/client-only'
 import HomeClient from './home-client'

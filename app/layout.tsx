@@ -1,7 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/providers/theme-provider';
-import { Toaster } from 'sonner';
+import ToasterMount from '@/components/util/ToasterMount'
 import { AuthProvider } from "@/contexts/auth-context";
 import Script from "next/script";
 import { generatePageMetadata } from "@/utils/generate-metadata";
@@ -111,18 +111,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                         }}
                     />
 
-                    <Toaster
-                        position="top-center"
-                        richColors
-                        toastOptions={{
-                            duration: 4000,
-                            style: {
-                                background: 'hsl(var(--background))',
-                                color: 'hsl(var(--foreground))',
-                                border: '1px solid hsl(var(--border))',
-                            },
-                        }}
-                    />
+                    <ToasterMount />
                 </SettingsProvider>
             </ThemeProvider>
         </AuthProvider>
