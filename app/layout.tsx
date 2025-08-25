@@ -43,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Preconnect to external domains for performance */}
             <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
             {/* DNS prefetch for external resources */}
-            <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+            {/*<link rel="dns-prefetch" href="https://www.google-analytics.com" />*/}
             {/* Favicon and icons */}
             <link rel="icon" href="/favicon.ico" sizes="32x32" />
             <link rel="icon" href="/icon.svg" type="image/svg+xml" />
@@ -128,19 +128,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </AuthProvider>
 
         {/* Google Analytics - replace with your tracking ID */}
-        <Script src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID" strategy="afterInteractive" />
-        <Script
-            id="google-analytics"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-                __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'GA_TRACKING_ID', { page_title: document.title, page_location: window.location.href });
-            `,
-            }}
-        />
+        {/*<Script src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID" strategy="afterInteractive" />*/}
+        {/*<Script*/}
+        {/*    id="google-analytics"*/}
+        {/*    strategy="afterInteractive"*/}
+        {/*    dangerouslySetInnerHTML={{*/}
+        {/*        __html: `*/}
+        {/*      window.dataLayer = window.dataLayer || [];*/}
+        {/*      function gtag(){dataLayer.push(arguments);}*/}
+        {/*      gtag('js', new Date());*/}
+        {/*      gtag('config', 'GA_TRACKING_ID', { page_title: document.title, page_location: window.location.href });*/}
+        {/*    `,*/}
+        {/*    }}*/}
+        {/*/>*/}
         </body>
         </html>
     );

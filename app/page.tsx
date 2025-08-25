@@ -312,7 +312,8 @@ export default function HomePage() {
           </section>
 
           {/* Recommended Products */}
-          <section className="py-16 min-h-[80vh] bg-muted/20" aria-labelledby="recommended-heading">
+          <section className="py-16 min-h-[80vh] bg-muted/20" aria-labelledby="recommended-heading"
+                   style={{ contentVisibility: 'auto', containIntrinsicSize: '800px' }}>
             <div className="container mx-auto px-4">
               <header className="text-center mb-12">
                 <div className="flex items-center justify-center space-x-2 mb-4">
@@ -416,7 +417,8 @@ export default function HomePage() {
           {/*</section>*/}
 
           {/* CTA Section - Enhanced accessibility */}
-          <section className="py-16 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" aria-labelledby="cta-heading">
+          <section className="py-16 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" aria-labelledby="cta-heading"
+                   style={{ contentVisibility: 'auto', containIntrinsicSize: '800px' }}>
             <div className="container mx-auto px-4 text-center">
               <h2 id="cta-heading" className="text-3xl lg:text-4xl font-bold mb-4">
                 Pregătit să comandă?
