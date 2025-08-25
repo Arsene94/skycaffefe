@@ -41,15 +41,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <html lang="ro" suppressHydrationWarning>
         <head>
             {/* Preconnect to external domains for performance */}
-            <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+            <link rel="preconnect" href="https://cdnjs.cloudflare.com"/>
             {/* DNS prefetch for external resources */}
             {/*<link rel="dns-prefetch" href="https://www.google-analytics.com" />*/}
             {/* Favicon and icons */}
-            <link rel="icon" href="/favicon.ico" sizes="32x32" />
-            <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-            <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-            <link rel="manifest" href="/manifest.json" />
+            <link rel="icon" href="/favicon.ico" sizes="32x32"/>
+            <link rel="icon" href="/icon.svg" type="image/svg+xml"/>
+            <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+            <link rel="manifest" href="/manifest.json"/>
             {/* Preload hero */}
+            <link
+                rel="preload"
+                as="image"
+                href="/hero.webp"
+                type="image/webp"
+                fetchPriority="high"
+                imageSrcSet="/hero.webp 1x"
+                imageSizes="100vw"
+            />
         </head>
 
         {/* overflow-x-hidden previne scroll-ul orizontal pe mobil fără a afecta desktopul */}
