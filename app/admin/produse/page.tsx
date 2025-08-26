@@ -90,7 +90,7 @@ export default function AdminProductsPage() {
       await reloadProducts();
       toast.success('Disponibilitate actualizată');
     } catch (e: any) {
-      toast.error(e?.message || 'Eroare la actualizare disponibilitate');
+      toast.error(error || 'Eroare la actualizare disponibilitate');
     }
   };
 
