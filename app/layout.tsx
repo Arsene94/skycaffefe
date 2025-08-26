@@ -6,7 +6,8 @@ import { AuthProvider } from "@/contexts/auth-context";
 import Script from "next/script";
 import { generatePageMetadata } from "@/utils/generate-metadata";
 import { SettingsProvider } from '@/contexts/settings-context';
-import { fetchSettingsServer } from '@/lib/settings';
+import { fetchSettingsServer } from '@/lib/settings-server';
+import apiClient from "@/lib/api";
 
 // Enhanced viewport configuration
 export const viewport: Viewport = {
@@ -35,7 +36,6 @@ export const metadata: Metadata = generatePageMetadata({
 });
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-    const settings = await fetchSettingsServer();
 
     return (
         <html lang="ro" suppressHydrationWarning>
@@ -65,7 +65,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <body className="font-sans antialiased overflow-x-hidden">
         <AuthProvider>
             <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-                <SettingsProvider initial={settings}>
                     {/* Skip to main content pentru accesibilitate */}
                     <a
                         href="#main-content"
@@ -121,7 +120,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     />
 
                     <ToasterMount />
-                </SettingsProvider>
             </ThemeProvider>
         </AuthProvider>
 

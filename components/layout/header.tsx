@@ -15,15 +15,19 @@ import {
 import { formatPrice } from '@/lib/format';
 import { usePathname } from 'next/navigation';
 import {useSettings} from "@/contexts/settings-context";
+import apiClient from "@/lib/api";
 
 type CartState = ReturnType<typeof useCartStore.getState>;
 
-export function Header() {
+export async function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { business_name } = useSettings();
+    const settings = await apiClient.getSettings();
+    const {
+        business_name,
+    } = settings.data || {}
   const itemCount         = useCartStore((s: CartState) => s.itemCount);
   const openCart          = useCartStore((s: CartState) => s.openCart);
   const getOfferHints     = useCartStore((s: CartState) => s.getOfferHints);

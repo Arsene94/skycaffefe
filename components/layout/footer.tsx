@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { MapPin, Phone, Clock, Instagram, Facebook, Mail } from 'lucide-react'
-import { fetchSettingsServer } from '@/lib/settings'
+import { fetchSettingsServer } from '@/lib/settings-server';
+import apiClient from "@/lib/api";
 
 // ——— util: split adresă stabil (fără hooks)
 function looksLikeStreet(s: string) {
@@ -30,15 +31,15 @@ function normalizeAddressLines(address?: string): string[] {
 }
 
 export async function Footer() {
-  const settings = await fetchSettingsServer()
-  const {
+    const settings = await apiClient.getSettings();
+    const {
     business_name,
     business_short,
     site_email,
     support_phone,
     pickup_address,
     availability_label_with_hours,
-  } = settings || {}
+  } = settings.data || {}
 
   const currentYear = new Date().getFullYear()
   const addressPretty = normalizeAddressLines(pickup_address || '').join('\n')
