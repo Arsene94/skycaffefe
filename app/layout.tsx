@@ -5,9 +5,6 @@ import ToasterMount from '@/components/util/ToasterMount'
 import { AuthProvider } from "@/contexts/auth-context";
 import Script from "next/script";
 import { generatePageMetadata } from "@/utils/generate-metadata";
-import { SettingsProvider } from '@/contexts/settings-context';
-import { fetchSettingsServer } from '@/lib/settings-server';
-import apiClient from "@/lib/api";
 
 // Enhanced viewport configuration
 export const viewport: Viewport = {
