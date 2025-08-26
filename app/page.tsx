@@ -2,7 +2,7 @@ export const dynamic = 'force-static'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Header } from '@/components/layout/header.server'
-import { Footer } from '@/components/layout/footer' // server-only
+import { Footer } from '@/components/layout/footer';
 import HomeClient from './home-client'
 import heroImage from '@/public/hero.webp'
 import { Badge } from '@/components/ui/badge'

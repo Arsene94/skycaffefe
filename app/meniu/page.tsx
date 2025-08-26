@@ -43,11 +43,6 @@ function MenuPageContent() {
   const EXTRA_MARGIN = 16;
   const STICKY_OFFSET = HEADER_HEIGHT + BAR_HEIGHT;
 
-    const [isClient, setIsClient] = useState(false);
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -268,7 +263,6 @@ function MenuPageContent() {
         </div>
     );
   }
-    if (!isClient) return null;
 
   return (
       <>

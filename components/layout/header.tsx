@@ -16,18 +16,15 @@ import { formatPrice } from '@/lib/format';
 import { usePathname } from 'next/navigation';
 import {useSettings} from "@/contexts/settings-context";
 import apiClient from "@/lib/api";
+import {AppSettings, SETTINGS_DEFAULTS} from "@/types";
 
 type CartState = ReturnType<typeof useCartStore.getState>;
 
-export async function Header() {
+export  function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-    const settings = await apiClient.getSettings();
-    const {
-        business_name,
-    } = settings.data || {}
   const itemCount         = useCartStore((s: CartState) => s.itemCount);
   const openCart          = useCartStore((s: CartState) => s.openCart);
   const getOfferHints     = useCartStore((s: CartState) => s.getOfferHints);
@@ -38,7 +35,21 @@ export async function Header() {
   const getAppliedOffers  = useCartStore((s: CartState) => s.getAppliedOffers);
 
   const { user, loading, logout } = useAuth();
-
+    const [settings, setSettings] = useState<AppSettings>(SETTINGS_DEFAULTS);
+    const [isFetched, setIsFetched] = useState(0);
+    useEffect(() => {
+        const getSettings = async () => {
+            const response = await apiClient.getSettings();
+            setSettings(response.data);
+            setIsFetched(1);
+        }
+        if (isFetched === 0) {
+            getSettings();
+        }
+    }, [isFetched]);
+    const {
+        business_name,
+    } = settings || {}
   useEffect(() => { if (!offersInitialized && !offersLoading) { refreshOffers().catch(() => {}); } }, [offersInitialized, offersLoading, refreshOffers]);
   useEffect(() => setMounted(true), []);
 

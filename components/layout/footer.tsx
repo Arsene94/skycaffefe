@@ -1,6 +1,9 @@
+"use client";
 import Link from 'next/link'
 import { MapPin, Phone, Clock, Instagram, Facebook, Mail } from 'lucide-react'
 import apiClient from "@/lib/api";
+import {useEffect, useState} from "react";
+import {AppSettings, SETTINGS_DEFAULTS} from "@/types";
 
 // ——— util: split adresă stabil (fără hooks)
 function looksLikeStreet(s: string) {
@@ -29,8 +32,19 @@ function normalizeAddressLines(address?: string): string[] {
   return lines.length ? lines : [raw]
 }
 
-export async function Footer() {
-    const settings = await apiClient.getSettings();
+export function Footer() {
+    const [settings, setSettings] = useState<AppSettings>(SETTINGS_DEFAULTS);
+    const [isFetched, setIsFetched] = useState(0);
+    useEffect(() => {
+        const getSettings = async () => {
+            const response = await apiClient.getSettings();
+            setSettings(response.data);
+            setIsFetched(1);
+        }
+        if (isFetched === 0) {
+            getSettings();
+        }
+    }, [isFetched]);
     const {
     business_name,
     business_short,
@@ -38,7 +52,7 @@ export async function Footer() {
     support_phone,
     pickup_address,
     availability_label_with_hours,
-  } = settings.data || {}
+  } = settings || {}
 
   const currentYear = new Date().getFullYear()
   const addressPretty = normalizeAddressLines(pickup_address || '').join('\n')
