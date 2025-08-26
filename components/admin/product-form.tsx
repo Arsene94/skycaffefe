@@ -503,7 +503,7 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
                       image={rawImageDataUrl}
                       crop={crop}
                       zoom={zoom}
-                      aspect={4 / 3}
+                      aspect={100}
                       cropShape="rect"
                       onCropChange={setCrop}
                       onCropComplete={onCropComplete}
