@@ -97,7 +97,10 @@ export default function CheckoutPage() {
   const [newAddrAddress, setNewAddrAddress] = useState('');
   const [newAddrDefault, setNewAddrDefault] = useState(false);
   const [creatingAddress, setCreatingAddress] = useState(false);
-
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
   useEffect(() => {
     (async () => {
       try {
@@ -226,6 +229,7 @@ export default function CheckoutPage() {
       setCreatingAddress(false);
     }
   };
+    if (!isClient) return null;
 
   const handlePlaceOrder = async () => {
     if (!canPlaceOrder) {

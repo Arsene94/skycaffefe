@@ -1,4 +1,3 @@
-// app/account/addresses/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -40,6 +39,10 @@ export default function AddressesPage() {
     const [city, setCity] = useState('');
     const [addr, setAddr] = useState('');
     const [label, setLabel] = useState('');
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -85,6 +88,7 @@ export default function AddressesPage() {
     };
 
     const canSave = useMemo(() => city.trim() && addr.trim(), [city, addr]);
+    if (!isClient) return null;
 
     const handleSave = async () => {
         try {

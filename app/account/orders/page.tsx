@@ -26,7 +26,10 @@ export default function OrdersPage() {
 
     const [orders, setOrders] = useState<OrderLite[]>([]);
     const [loadingList, setLoadingList] = useState(true);
-
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     useEffect(() => {
         if (!loading && !user) {
             router.replace('/auth/login?returnTo=/account/orders');
@@ -53,6 +56,7 @@ export default function OrdersPage() {
             }
         })();
     }, [user]);
+    if (!isClient) return null;
 
     return (
         <>

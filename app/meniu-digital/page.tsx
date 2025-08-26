@@ -42,7 +42,10 @@ function DigitalMenuPageContent() {
     const BAR_HEIGHT = 56;
     const EXTRA_MARGIN = 16;
     const STICKY_OFFSET = HEADER_HEIGHT + BAR_HEIGHT;
-
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     useEffect(() => {
         const fetchAll = async () => {
             try {
@@ -263,6 +266,7 @@ function DigitalMenuPageContent() {
             </div>
         );
     }
+    if (!isClient) return null;
 
     return (
         <>

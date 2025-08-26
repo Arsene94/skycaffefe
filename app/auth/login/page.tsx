@@ -1,7 +1,7 @@
 // app/auth/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import apiClient from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,10 @@ export default function LoginPage() {
     const [loadingEmail, setLoadingEmail] = useState(false);
     const { loginEmail } = useAuth();
     const [emailForm, setEmailForm] = useState({ email: '', password: '' });
-
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     const loginEmailHandler = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoadingEmail(true);
@@ -33,6 +36,7 @@ export default function LoginPage() {
             setLoadingEmail(false);
         }
     };
+    if (!isClient) return null;
 
     return (
         <>

@@ -41,7 +41,10 @@ export default function OrderDetailsPage() {
 
     const [order, setOrder] = useState<OrderFull | null>(null);
     const [loadingOrder, setLoadingOrder] = useState(true);
-
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     useEffect(() => {
         if (!loading && !user) {
             router.replace(`/auth/login?returnTo=/account/orders/${params.id}`);
@@ -83,6 +86,7 @@ export default function OrderDetailsPage() {
             }
         })();
     }, [user, params.id]);
+    if (!isClient) return null;
 
     return (
         <>

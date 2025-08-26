@@ -1,16 +1,18 @@
+"use client";
+
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { CartSheet } from '@/components/cart/cart-sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  MapPin, 
-  Clock, 
-  Phone, 
-  Star, 
-  Users, 
-  Award, 
+import {
+  MapPin,
+  Clock,
+  Phone,
+  Star,
+  Users,
+  Award,
   Heart,
   ChefHat,
   Utensils,
@@ -18,6 +20,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import {useEffect, useState} from "react";
 
 const teamMembers = [
   {
@@ -64,11 +67,17 @@ const features = [
 ];
 
 export default function AboutPage() {
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+    if (!isClient) return null;
+
   return (
     <>
       <Header />
       <CartSheet />
-      
+
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
         <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
@@ -105,21 +114,21 @@ export default function AboutPage() {
                 </h2>
                 <div className="space-y-4 text-muted-foreground text-lg leading-relaxed">
                   <p>
-                    Sky Caffe a luat naștere din pasiunea pentru gastronomia de calitate și 
+                    Sky Caffe a luat naștere din pasiunea pentru gastronomia de calitate și
                     dorința de a crea o experiență culinară memorabilă în inima Năvodari.
                   </p>
                   <p>
-                    Situat pe rooftop-ul din centrul orașului, restaurantul nostru oferă 
-                    nu doar mâncare delicioasă, ci și o priveliște spectaculoasă care 
+                    Situat pe rooftop-ul din centrul orașului, restaurantul nostru oferă
+                    nu doar mâncare delicioasă, ci și o priveliște spectaculoasă care
                     transformă fiecare masă într-o experiență specială.
                   </p>
                   <p>
-                    Echipa noastră de bucătari profesioniști pregătește zilnic preparate 
-                    cu ingrediente proaspete, combinând tehnicile tradiționale cu 
+                    Echipa noastră de bucătari profesioniști pregătește zilnic preparate
+                    cu ingrediente proaspete, combinând tehnicile tradiționale cu
                     inovația modernă pentru a vă oferi savori autentice și rafinate.
                   </p>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row gap-4 mt-8">
                   <Button asChild size="lg">
                     <Link href="/meniu">
@@ -201,7 +210,7 @@ export default function AboutPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
-                
+
                 return (
                   <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
@@ -267,7 +276,7 @@ export default function AboutPage() {
                 </div>
                 <p className="opacity-90">Clienți mulțumiți</p>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <Star className="w-8 h-8 mr-2 fill-current" />
@@ -275,7 +284,7 @@ export default function AboutPage() {
                 </div>
                 <p className="opacity-90">Rating mediu</p>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <Award className="w-8 h-8 mr-2" />
@@ -283,7 +292,7 @@ export default function AboutPage() {
                 </div>
                 <p className="opacity-90">Ani de experiență</p>
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-center mb-2">
                   <Heart className="w-8 h-8 mr-2 fill-current" />
@@ -303,7 +312,7 @@ export default function AboutPage() {
                 <h2 className="text-3xl lg:text-4xl font-bold mb-6">
                   Locația <span className="text-[hsl(var(--primary))]">noastră</span>
                 </h2>
-                
+
                 <div className="space-y-6">
                   <Card>
                     <CardContent className="p-6">

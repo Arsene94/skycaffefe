@@ -1,4 +1,3 @@
-// app/account/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -36,7 +35,10 @@ export default function AccountPage() {
     const [orders, setOrders] = useState<OrderLite[]>([]);
     const [loadingOrders, setLoadingOrders] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
-
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     useEffect(() => {
         if (!loading && !user) {
             router.replace('/auth/login?returnTo=/account');
@@ -74,6 +76,7 @@ export default function AccountPage() {
         () => !!name.trim() && !saving,
         [name, saving]
     );
+    if (!isClient) return null;
 
     const handleSave = async () => {
         try {
