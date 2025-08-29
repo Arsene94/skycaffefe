@@ -45,7 +45,6 @@ const categorySchema = z.object({
   description: z.string().min(10, 'Descrierea trebuie să aibă cel puțin 10 caractere').max(200, 'Descrierea este prea lungă'),
   icon: z.string().min(1, 'Alegeți o iconiță'),
   order: z.number().min(1, 'Ordinea trebuie să fie pozitivă').max(100, 'Ordinea este prea mare'),
-  is_popular: z.boolean().optional(),
   show_delivery: z.boolean().optional(),
   show_menu: z.boolean().optional(),
 });
@@ -86,7 +85,6 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
       description: category?.description || '',
       icon: category?.icon || '',
       order: category?.order || 1,
-      is_popular: category?.is_popular || false,
       show_delivery: category?.show_delivery ?? true,
       show_menu: category?.show_menu ?? true,
     },
@@ -213,16 +211,6 @@ export function CategoryForm({ category, onClose, onSaved }: CategoryFormProps) 
           />
           <p className="text-xs text-muted-foreground">Determină ordinea de afișare (1 = primul)</p>
           {errors.order && <p className="text-sm text-destructive">{errors.order.message}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="order">Ordine *</Label>
-          <Checkbox
-              id="is_popular"
-              {...register('is_popular')}
-              className={errors.is_popular ? 'border-destructive' : ''}
-          />
-          <p className="text-xs text-muted-foreground">Seteaza categorie populara (maxim 6)</p>
-          {errors.is_popular && <p className="text-sm text-destructive">{errors.is_popular.message}</p>}
         </div>
 
         <div className="space-y-2">
