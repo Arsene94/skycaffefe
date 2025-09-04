@@ -15,7 +15,7 @@ export async function Header() {
                                    bg-clip-text text-transparent hover:opacity-90 transition-opacity">
                         <Image
                             src="/logo.webp"
-                            className="relative w-auto"
+                            className="relative w-[3rem]"
                             alt="SkyCaffe logo"
                             width={466}
                             height={154}

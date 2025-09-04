@@ -87,7 +87,7 @@ export  function Header() {
             >
                 <Image
                     src="/logo.webp"
-                    className="relative w-auto"
+                    className="relative w-[3rem]"
                     alt="SkyCaffe logo"
                     width={466}
                     height={154}
