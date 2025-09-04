@@ -3,73 +3,71 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --background: 39 42% 95%;      /* bej deschis (header background) */
-        --foreground: 0 0% 0%;         /* negru text */
+  :root {
+    --background: 45 58% 96%;     /* crem cald */
+    --foreground: 222 20% 12%;    /* charcoal slate */
+    --card: 45 58% 98%;
+    --card-foreground: 222 20% 12%;
+    --popover: 45 58% 98%;
+    --popover-foreground: 222 20% 12%;
 
-        --card: 0 0% 100%;             /* alb (casete, carduri) */
-        --card-foreground: 0 0% 0%;
+    --primary: 150 90% 26%;
+    --primary-foreground: 0 0% 100%;
 
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 0%;
+    --secondary: 45 40% 92%;      /* crem deschis (chipuri, badge-uri) */
+    --secondary-foreground: 222 20% 12%;
 
-        --primary: 46 62% 52%;         /* auriu închis */
-        --primary-foreground: 0 0% 100%;
+    --muted: 46.5 76.7% 89.9%;
+    --muted-foreground: 222 12% 40%;
 
-        --secondary: 46 77% 90%;       /* auriu deschis */
-        --secondary-foreground: 0 0% 0%;
+    --accent: 46 85% 28%;         /* auriu – potrivit cu logo-ul */
+    --accent-foreground: 0 0% 98%;
 
-        --muted: 39 42% 95%;
-        --muted-foreground: 0 0% 20%;  /* gri închis text secundar */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-        --accent: 46 62% 52%;          /* auriu închis pentru accente */
-        --accent-foreground: 0 0% 100%;
+    --border: 45 28% 82%;
+    --input: 45 28% 82%;
+    --ring: 150 90% 45%;
+    --radius: 0.5rem;
 
-        --destructive: 0 84% 60%;
-        --destructive-foreground: 0 0% 98%;
+    /* Extra brand tokens pentru hero/accente luminoase */
+    --hero: 275 78% 56%;          /* violet neon (overlay hero) */
+    --hero-contrast: 150 80% 40%; /* verde neon (gradient cu violet) */
+  }
 
-        --border: 39 42% 85%;
-        --input: 39 42% 85%;
-        --ring: 46 77% 70%;
-        --radius: 0.5rem;
+  .dark {
+    --background: 225 18% 10%;    /* charcoal albastruie (match cu poza) */
+    --foreground: 45 40% 92%;     /* crem luminos */
 
-        /* Extra brand tokens pentru hero/accente luminoase */
-        --hero: 46 77% 90%;            /* degrade deschis */
-        --hero-contrast: 46 62% 52%;   /* degrade închis */
-    }
+    --card: 225 18% 13%;
+    --card-foreground: 45 40% 92%;
 
-    .dark {
-        --background: 0 0% 0%;         /* negru fundal */
-        --foreground: 0 0% 100%;       /* alb text */
+    --popover: 225 18% 13%;
+    --popover-foreground: 45 40% 92%;
 
-        --card: 0 0% 7%;               /* gri foarte închis pentru carduri */
-        --card-foreground: 0 0% 100%;
+    --primary: 150 85% 48%;       /* verde mai electric */
+    --primary-foreground: 0 0% 0%;
 
-        --popover: 0 0% 7%;
-        --popover-foreground: 0 0% 100%;
+    --secondary: 225 15% 18%;
+    --secondary-foreground: 45 40% 92%;
 
-        --primary: 46 62% 52%;         /* auriu închis */
-        --primary-foreground: 0 0% 0%;
+    --muted: 225 12% 22%;
+    --muted-foreground: 220 10% 65%;
 
-        --secondary: 46 77% 90%;       /* auriu deschis */
-        --secondary-foreground: 0 0% 0%;
+    --accent: 46 90% 58%;         /* auriu vizibil pe dark */
+    --accent-foreground: 225 18% 12%;
 
-        --muted: 0 0% 15%;
-        --muted-foreground: 0 0% 80%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 98%;
 
-        --accent: 46 77% 90%;          /* auriu vizibil pe dark */
-        --accent-foreground: 0 0% 0%;
+    --border: 225 15% 18%;
+    --input: 225 15% 18%;
+    --ring: 150 90% 50%;
 
-        --destructive: 0 62% 30%;
-        --destructive-foreground: 0 0% 98%;
-
-        --border: 0 0% 20%;
-        --input: 0 0% 20%;
-        --ring: 46 62% 52%;
-
-        --hero: 46 77% 90%;
-        --hero-contrast: 46 62% 52%;
-    }
+    --hero: 275 85% 60%;          /* violet mai intens */
+    --hero-contrast: 150 85% 45%;
+  }
 }
 
 @layer base {

@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 
 // insule client minimale (se hidratează după mount)
 import { ThemeToggleIsland, UserMenuIsland, CartIsland } from './header-islands'
+import Image from "next/image";
 
 export async function Header() {
     return (
@@ -12,7 +13,16 @@ export async function Header() {
                 <div className="flex h-16 items-center justify-between">
                     <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--accent))]
                                    bg-clip-text text-transparent hover:opacity-90 transition-opacity">
-                        Sky Caffe
+                        <Image
+                            src="/logo.webp"
+                            className="relative w-auto"
+                            alt="SkyCaffe logo"
+                            width={466}
+                            height={154}
+                            priority
+                            loading="eager"
+                            fetchPriority="high"
+                        />
                     </Link>
 
                     <nav className="hidden md:flex items-center space-x-8">
