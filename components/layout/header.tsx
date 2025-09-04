@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cart';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import Image from "next/image";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuLabel,
@@ -84,7 +85,16 @@ export  function Header() {
                     'max-w-[55vw] sm:max-w-none truncate'
                 )}
             >
-              {business_name || 'Brand'}
+                <Image
+                    src="/logo.webp"
+                    className="relative w-auto"
+                    alt="SkyCaffe logo"
+                    width={466}
+                    height={154}
+                    priority
+                    loading="eager"
+                    fetchPriority="high"
+                />
             </Link>
 
             {/* Nav desktop */}
