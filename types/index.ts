@@ -233,7 +233,7 @@ export type AppSettings = {
   order_auto_confirm: boolean;
   accept_cash: boolean;
   accept_card: boolean;
-  pickup_address: string | null;
+  address: string | null;
   availability: Availability;
   availability_days_label: string;
   availability_label_with_hours: string;
@@ -252,7 +252,7 @@ export const SETTINGS_DEFAULTS: AppSettings = {
   order_auto_confirm: false,
   accept_cash: true,
   accept_card: true,
-  pickup_address: null,
+  address: null,
   availability: WORKING_HOURS_DEFAULTS,
   availability_days_label: '',
   availability_label_with_hours: '',

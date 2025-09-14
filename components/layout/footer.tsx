@@ -50,12 +50,11 @@ export function Footer() {
     business_short,
     site_email,
     support_phone,
-    pickup_address,
+    address,
     availability_label_with_hours,
   } = settings || {}
-
   const currentYear = new Date().getFullYear()
-  const addressPretty = normalizeAddressLines(pickup_address || '').join('\n')
+  const addressPretty = normalizeAddressLines(address || '').join('\n')
 
   return (
       <footer className="w-full bg-card border-t border-border" role="contentinfo">
