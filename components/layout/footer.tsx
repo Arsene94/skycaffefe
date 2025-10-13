@@ -107,7 +107,7 @@ export function Footer() {
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
                     {/* adresă stabilă, cu newline-uri randate */}
-                    <span className="whitespace-pre-line break-words">{addressPretty || '-'}</span>
+                    <span className="whitespace-pre-line break-words">{address || '-'}</span>
                   </div>
 
                   <div className="flex items-center gap-2">

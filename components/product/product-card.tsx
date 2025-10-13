@@ -48,7 +48,7 @@ export function ProductCard({
                             'relative overflow-hidden rounded-t-lg',
                             // folosim un aspect fix pentru consistență în grid
                             `aspect-[${imageAspect}]`,
-                            imageFit === 'contain' && 'bg-muted' // fundal subtil pt bare laterale
+                            imageFit === 'contain' // fundal subtil pt bare laterale
                         )}
                     >
                         <Image
