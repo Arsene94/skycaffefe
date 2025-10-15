@@ -350,7 +350,7 @@ function MenuPageContent() {
                             <span
                                 className={[
                                   'ml-2 inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px]',
-                                  isActive ? 'bg-primary-foreground/20' : 'bg-muted text-muted-foreground',
+                                  isActive ? 'bg-primary-foreground/20' : 'text-muted-foreground',
                                 ].join(' ')}
                             >
                           {count}
