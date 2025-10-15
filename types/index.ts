@@ -234,6 +234,7 @@ export type AppSettings = {
   accept_cash: boolean;
   accept_card: boolean;
   address: string | null;
+    pickup_address?: string | null;
   availability: Availability;
   availability_days_label: string;
   availability_label_with_hours: string;
