@@ -811,7 +811,7 @@ function OrderEditDialog({
 
   return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] sm:max-w-2xl lg:max-w-5xl">
+        <DialogContent className="max-w-[95vw] max-h-[90%] sm:max-w-2xl lg:max-w-5xl overflow-scroll">
           <DialogHeader>
             <DialogTitle>Editează comanda #{orderId}</DialogTitle>
           </DialogHeader>
